@@ -4,5 +4,8 @@
     },
     "imports": {
         "decimal.js": "npm:decimal.js"
+    },
+    "fmt": {
+        "indentWidth": 4
     }
 }

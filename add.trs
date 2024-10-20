@@ -1,3 +1,7 @@
-5 dup while 
-    0 1 - + dup prn dup
+5
+
+dup 0 > while 
+    dup prn
+    1 - 
+    dup 0 >
 end
