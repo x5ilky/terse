@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
 import { errorAt } from "./misc.ts";
 import type { Instruction } from "./assoc.ts";
+import { Chainmap } from "./chainmap.ts";
 
 function writeStdout(str: string) {
   Deno.stdout.writeSync(
@@ -58,12 +59,14 @@ export class Interpreter {
   functions: {
     [n: string]: (stack: Value[], interpreter: Interpreter) => void;
   };
+  bindings: Chainmap<string, Value>;
   constructor(source: string, instructions: Instruction[]) {
     this.ip = 0;
     this.source = source;
     this.instructions = instructions;
     this.stack = [];
     this.callStack = [];
+    this.bindings = new Chainmap();
     this.functions = {
       "+": (stack) => {
         const b = stack.pop();
@@ -355,9 +358,18 @@ export class Interpreter {
         {
           const fn = this.functions[instr.instr as keyof typeof this.functions];
           if (fn === undefined) {
-            errorAt(this.source, instr, `no function called: ${instr.instr}`);
+            const binding = this.bindings.get(instr.instr);
+            if (binding === undefined) {
+              errorAt(
+                this.source,
+                instr,
+                `no function or binding called: ${instr.instr}`,
+              );
+            }
+            this.stack.push(this.bindings.get(instr.instr)!);
+          } else {
+            fn(this.stack, this);
           }
-          fn(this.stack, this);
         }
         break;
       case "IFunction":
@@ -370,6 +382,19 @@ export class Interpreter {
         }
         break;
 
+      case "ILetBinding":
+        {
+          this.bindings.push();
+          for (const binding of instr.names.toReversed()) {
+            this.bindings.set(binding, this.stack.pop()!);
+          }
+        }
+        break;
+      case "IDropBinding":
+        {
+          this.bindings.pop();
+        }
+        break;
       case "INoop":
         break;
       default:

@@ -1,7 +1,9 @@
 fn foo
     number string : number do
-    swap repeat
-        dup prn
+    let a b do 
+        a repeat
+            b prn
+        end
     end
 end
 

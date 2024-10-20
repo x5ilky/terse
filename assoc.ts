@@ -9,6 +9,8 @@ export type InstructionBase =
     | IIfStatement
     | IRepeatStatement
     | IWhileStatement
+    | ILetBinding
+    | IDropBinding
     | ICall
     | IReturn
     | IFunction
@@ -35,6 +37,14 @@ export type IWhileStatement = {
     type: "IWhileStatement";
     startIp: number;
     endIp: number;
+};
+export type ILetBinding = {
+    type: "ILetBinding";
+    names: string[];
+};
+export type IDropBinding = {
+    type: "IDropBinding";
+    names: string[];
 };
 export type INoop = {
     type: "INoop";
@@ -109,6 +119,26 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                     type: "IWhileStatement",
                                     startIp: instructions.length,
                                     endIp: -1,
+                                });
+                            }
+                            break;
+                        case "let":
+                            {
+                                const names = [];
+                                do {
+                                    const a = tokens[++i];
+                                    if (
+                                        a.type === "keyword" && a.value === "do"
+                                    ) {
+                                        break;
+                                    }
+                                    names.push(a.value);
+                                } while (true);
+                                endStack.push(instructions.length);
+                                instructions.push({
+                                    ...token,
+                                    type: "ILetBinding",
+                                    names,
                                 });
                             }
                             break;
@@ -215,6 +245,15 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                             instructions.push({
                                                 ...token,
                                                 type: "IReturn",
+                                            });
+                                        }
+                                        break;
+                                    case "ILetBinding":
+                                        {
+                                            instructions.push({
+                                                ...token,
+                                                type: "IDropBinding",
+                                                names: start.names,
                                             });
                                         }
                                         break;

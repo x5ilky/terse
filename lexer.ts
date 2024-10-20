@@ -113,6 +113,7 @@ export class Lexer {
                         case "end":
                         case "repeat":
                         case "while":
+                        case "let":
                         case "do":
                         case "fn":
                         case ":":
