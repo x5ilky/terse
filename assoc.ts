@@ -242,8 +242,8 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
     }
 
     while (endStack.length) {
-        let a = endStack.pop()!;
-        let v = instructions[a];
+        const a = endStack.pop()!;
+        const v = instructions[a];
         switch (v.type) {
             case "IIfStatement":
                 errorAt(

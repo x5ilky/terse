@@ -25,7 +25,6 @@ export function errorAt(source: string, loc: Location, error: string): never {
     let startLine: number = -1;
     let endLine: number = -1;
     let startCh: number = -1;
-    let endCh: number = -1;
 
     let line = 0;
     let col = 0;
@@ -44,7 +43,6 @@ export function errorAt(source: string, loc: Location, error: string): never {
         }
         if (i == loc.end - 1) {
             endLine = line;
-            endCh = col;
         }
     }
 
