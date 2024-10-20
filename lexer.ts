@@ -76,10 +76,26 @@ export class Lexer {
                         );
                     }
                     const ch = this.eat();
-                    if (ch == '"') {
-                        break;
+                    if (ch == "\\") {
+                        const r = this.eat();
+                        switch (r) {
+                            case "n": buffer += "\n"; break;
+                            case "r": buffer += "\r"; break;
+                            case "t": buffer += "\t"; break;
+                            case "b": buffer += "\b"; break;
+                            case "x": {
+                                const hex = this.eat() + this.eat();
+                                const h = parseInt(hex, 16);
+
+                                buffer += String.fromCharCode(h)
+                            } break;
+                        }
                     }
-                    buffer += ch;
+                    else if (ch == '"') {
+                        break;
+                    } else {
+                        buffer += ch;
+                    }
                 }
 
                 tokens.push({

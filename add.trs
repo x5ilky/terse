@@ -14,4 +14,4 @@ fn ipne
 end
 
 "input: " ipn
-"Hello, world!" foo
+"Hello, world!\x0A" foo
