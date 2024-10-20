@@ -57,13 +57,13 @@ export function errorAt(source: string, loc: Location, error: string): never {
         }
         if (startLine <= line && line <= endLine) {
             if (i < loc.start || i >= loc.end) {
-                out += ".";
+                out += `\x1b[90m${char}\x1b[0m`;
             } else {
-                out += char;
+                out += `\x1b[33m${char}\x1b[0m`;
             }
         }
     }
-    console.log(`error: ${error}`);
+    console.log(`\x1b[31merror: \x1b[0m${error}`);
     console.log(`at: ${loc.file}:${startLine + 1}:${startCh}`);
     console.log(out.split("\n").map((v) => `| ${v}`).join("\n"));
 

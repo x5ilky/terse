@@ -1,10 +1,1 @@
-fn foo
-    number string : number do
-    let a b do 
-        a repeat
-            b prn
-        end
-    end
-end
-
-5 "dfsdf" foo
+1034 "test" >
