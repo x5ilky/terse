@@ -328,22 +328,20 @@ export class Interpreter {
       case "IWhileStatement":
         {
           do {
-            const a = this.stack.pop();
-            if (a === undefined) {
-              errorAt(
-                this.source,
-                instr,
-                "No elements on stack to pop for while statement",
-              );
-            }
-            if (!a.innerDecimal().gte(1)) break;
-            this.ip = instr.bodyIp;
-            while (true) {
+            this.ip = instr.predicateIp;
+            while (this.ip < instr.bodyIp) {
               this.ip++;
-              if (this.ip === instr.endIp) {
-                break;
-              }
+              // console.log(this.ip, instr.bodyIp, this.instructions[this.ip])
+              this.interpretOne(); 
+            }
+            const predicate = this.stack.pop()!;
+            if (predicate.innerDecimal().eq(0)) {
+              break;
+            }
+            this.ip = instr.bodyIp;
+            while (this.ip < instr.endIp) {
               this.interpretOne();
+              this.ip++;
             }
           } while (true);
           this.ip = instr.endIp;

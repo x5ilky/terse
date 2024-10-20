@@ -35,8 +35,9 @@ export type IRepeatStatement = {
 };
 export type IWhileStatement = {
     type: "IWhileStatement";
-    startIp: number;
+    bodyIp: number;
     endIp: number;
+    predicateIp: number;
 };
 export type ILetBinding = {
     type: "ILetBinding";
@@ -69,6 +70,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
     const instructions: Instruction[] = [];
 
     const endStack: number[] = [];
+    let resolvedWhiles = 0;
 
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
@@ -117,11 +119,32 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 instructions.push({
                                     ...token,
                                     type: "IWhileStatement",
-                                    startIp: instructions.length,
+                                    bodyIp: -1,
+                                    predicateIp: instructions.length,
                                     endIp: -1,
                                 });
+                                resolvedWhiles++;
                             }
                             break;
+                        case "do":
+                            {
+                                const whileIdx = endStack.pop();
+                                endStack.push(whileIdx!);
+                                if (whileIdx === undefined) {
+                                    errorAt(source, token, "random do keyword");
+                                }
+                                const whileBlock = instructions[whileIdx];
+                                if (whileBlock.type !== "IWhileStatement") {
+                                    errorAt(source, token, "do keyword can only be used with `while`")
+                                }
+                                whileBlock.bodyIp = instructions.length;
+                                instructions.push({
+                                    ...token,
+                                    type: "INoop",
+                                })
+                                resolvedWhiles--;
+                                
+                            } break;
                         case "let":
                             {
                                 const names = [];
@@ -312,6 +335,14 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                     "error: function has no matching `end` keyword",
                 );
                 break;
+        }
+    }
+
+    if (resolvedWhiles) {
+        for (const instr of instructions) {
+            if (instr.type === "IWhileStatement" && instr.bodyIp === -1) {
+                errorAt(source, instr, "while has no matching do keyword")
+            }
         }
     }
 
