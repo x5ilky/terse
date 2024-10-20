@@ -26,10 +26,6 @@ pred while
     ...
 end
 
-10 range foreach i
-    ...
-end
-
 # functions
 
 # prints out a string n times

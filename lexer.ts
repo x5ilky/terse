@@ -112,7 +112,6 @@ export class Lexer {
                         case "if":
                         case "end":
                         case "repeat":
-                        case "foreach":
                         case "while":
                             {
                                 tokens.push({
