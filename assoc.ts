@@ -6,6 +6,7 @@ export type Instruction =
     | INumberLiteral
     | IStringLiteral
     | IIfStatement
+    | IRepeatStatement
     | ICall
     | INoop;
 
@@ -21,6 +22,11 @@ export type IIfStatement = {
     type: "IIfStatement";
     end: number;
 };
+export type IRepeatStatement = {
+    type: "IRepeatStatement";
+    start: number;
+    end: number;
+}
 export type INoop = {
     type: "INoop";
 }
@@ -61,6 +67,16 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 });
                             }
                             break;
+                        case "repeat":
+                            {
+                                endStack.push(instructions.length);
+                                instructions.push({
+                                    type: "IRepeatStatement",
+                                    start: instructions.length,
+                                    end: -1,
+                                });
+                            }
+                            break;
                         case "end":
                             {
                                 if (endStack.length === 0) {
@@ -73,6 +89,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 const start = instructions[endStack.pop()!];
                                 switch (start.type) {
                                     case "IIfStatement":
+                                    case "IRepeatStatement":
                                         {
                                             start.end = instructions.length;
                                         }

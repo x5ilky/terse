@@ -1,6 +1,3 @@
-0 0 >= if 
-    "Hello, world!" prn
-    1 1 == if 
-        "nmop" prn
-    end
+5 repeat 
+    "Hello" prn
 end

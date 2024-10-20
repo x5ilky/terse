@@ -293,6 +293,26 @@ export class Interpreter {
                     }
                 }
                 break;
+            case "IRepeatStatement":
+                {
+                    const a = this.stack.pop();
+
+                    for (let i = new Decimal(0); i.lt(a!.innerDecimal()); i = i.add(1)) {
+                        this.ip = instr.start;
+                        while (true) {
+                            this.ip++;
+                            if (
+                                this.ip === instr.end
+                            ) {
+                                break;
+                            }
+                            this.interpretOne();
+                        }
+                    }
+                    this.ip = instr.end;
+                    
+                }
+                break;
 
             case "ICall":
                 {
