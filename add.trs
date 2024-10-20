@@ -1,3 +1,3 @@
-5 repeat 
-    "Hello" prn
+5 dup while 
+    0 1 - + dup prn dup
 end

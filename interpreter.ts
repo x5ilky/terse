@@ -1,5 +1,4 @@
 import { Decimal } from "decimal.js";
-import type { Token } from "./lexer.ts";
 import { errorAt } from "./misc.ts";
 import type { Instruction } from "./assoc.ts";
 
@@ -15,6 +14,10 @@ class Value {
     constructor(type: Value["type"], value: Value["value"]) {
         this.type = type;
         this.value = value;
+    }
+    
+    clone() {
+        return new Value(this.type, this.value)
     }
 
     static newNumber(num: Decimal) {
@@ -252,6 +255,12 @@ export class Interpreter {
                     Value.newNumber(new Decimal(+!a.innerDecimal().gte(1))),
                 );
             },
+
+            "dup": stack => {
+                const a = stack.pop()!;
+
+                stack.push(a, a.clone())
+            }
         };
     }
 
@@ -302,18 +311,40 @@ export class Interpreter {
                         i.lt(a!.innerDecimal());
                         i = i.add(1)
                     ) {
-                        this.ip = instr.start;
+                        this.ip = instr.startIp;
                         while (true) {
                             this.ip++;
                             if (
-                                this.ip === instr.end
+                                this.ip === instr.endIp
                             ) {
                                 break;
                             }
                             this.interpretOne();
                         }
                     }
-                    this.ip = instr.end;
+                    this.ip = instr.endIp;
+                }
+                break;
+            case "IWhileStatement":
+                {
+                    do {
+                        const a = this.stack.pop();
+                        if (a === undefined) {
+                            errorAt(this.source, instr, "No elements on stack to pop for while statement");
+                        }
+                        if (!a) break;
+                        this.ip = instr.startIp;
+                        while (true) {
+                            this.ip++;
+                            if (
+                                this.ip === instr.endIp
+                            ) {
+                                break;
+                            }
+                            this.interpretOne();
+                        }
+                    } while (true);
+                    this.ip = instr.endIp;
                 }
                 break;
 

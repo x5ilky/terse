@@ -1,12 +1,14 @@
 import { Decimal } from "decimal.js";
-import type { Token } from "./lexer.ts";
+import type { Location, Token } from "./lexer.ts";
 import { errorAt } from "./misc.ts";
 
-export type Instruction =
+export type Instruction = InstructionBase & Location;
+export type InstructionBase =
     | INumberLiteral
     | IStringLiteral
     | IIfStatement
     | IRepeatStatement
+    | IWhileStatement
     | ICall
     | INoop;
 
@@ -20,12 +22,17 @@ export type IStringLiteral = {
 };
 export type IIfStatement = {
     type: "IIfStatement";
-    end: number;
+    endIp: number;
 };
 export type IRepeatStatement = {
     type: "IRepeatStatement";
-    start: number;
-    end: number;
+    startIp: number;
+    endIp: number;
+};
+export type IWhileStatement = {
+    type: "IWhileStatement";
+    startIp: number;
+    endIp: number;
 };
 export type INoop = {
     type: "INoop";
@@ -45,12 +52,15 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
         switch (token.type) {
             case "numberLiteral":
                 instructions.push({
+                    ...token,
                     type: "INumberLiteral",
                     value: new Decimal(token.value),
+
                 });
                 break;
             case "stringLiteral":
                 instructions.push({
+                    ...token,
                     type: "IStringLiteral",
                     value: token.value,
                 });
@@ -62,8 +72,9 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                             {
                                 endStack.push(instructions.length);
                                 instructions.push({
+                    ...token,
                                     type: "IIfStatement",
-                                    end: -1,
+                                    endIp: -1,
                                 });
                             }
                             break;
@@ -71,9 +82,21 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                             {
                                 endStack.push(instructions.length);
                                 instructions.push({
+                    ...token,
                                     type: "IRepeatStatement",
-                                    start: instructions.length,
-                                    end: -1,
+                                    startIp: instructions.length,
+                                    endIp: -1,
+                                });
+                            }
+                            break;
+                        case "while":
+                            {
+                                endStack.push(instructions.length);
+                                instructions.push({
+                    ...token,
+                                    type: "IWhileStatement",
+                                    startIp: instructions.length,
+                                    endIp: -1,
                                 });
                             }
                             break;
@@ -90,8 +113,10 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 switch (start.type) {
                                     case "IIfStatement":
                                     case "IRepeatStatement":
+                                    case "IWhileStatement":
                                         {
-                                            start.end = instructions.length;
+                                            start.endIp = instructions.length;
+                                            start.end = token.end;
                                         }
                                         break;
                                     default: {
@@ -99,6 +124,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                     }
                                 }
                                 instructions.push({
+                    ...token,
                                     type: "INoop",
                                 });
                             }
@@ -107,7 +133,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                 }
                 break;
             case "identifier":
-                instructions.push({ type: "ICall", instr: token.value });
+                instructions.push({ ...token, type: "ICall", instr: token.value });
                 break;
         }
     }
