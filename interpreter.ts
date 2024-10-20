@@ -6,23 +6,41 @@ function writeStdout(str: string) {
     Deno.stdout.writeSync(Uint8Array.from(str.split("").map(a => a.charCodeAt(0))));
 }
 
-type Value = ValueNumber | ValueString;
+class Value {
+    type: "number" | "string";
+    value: Decimal | string;
+    constructor (type: Value["type"], value: Value["value"]) {
+        this.type = type;
+        this.value = value;      
+    }
 
-type ValueNumber = {
-    type: "number";
-    value: Decimal;
-};
-type ValueString = {
-    type: "string";
-    value: string;
-};
+    static newNumber(num: Decimal) {
+        return new Value("number", num);
+    }
+    static newString(num: string) {
+        return new Value("string", num);
+    }
 
-function valueEquals(a: Value, b: Value): boolean {
-    return a.type == b.type ?
-        a.type == "number" ?
-            a.value.eq(b.value as Decimal)
-            : a.value == b.value
-        : false
+    equals(b: Value): boolean {
+        return this.type == b.type ?
+            this.type == "number" ?
+                this.innerDecimal().eq(b.innerDecimal())
+                : this.value == b.value
+            : false
+    }
+
+    innerDecimal(): Decimal {
+        if (this.type === "number") {
+            return this.value as Decimal;
+        }
+        throw new Error("Value isn't number, couldn't extract inner Decimal")
+    }
+    innerString(): string {
+        if (this.type === "string") {
+            return this.value as string;
+        }
+        throw new Error("Value isn't string, couldn't extract inner string")
+    }
 }
 
 export class Interpreter {
@@ -39,12 +57,9 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push({ type: "number", value: a.value.add(b.value) });
+                    stack.push(Value.newNumber(a.innerDecimal().add(b.innerDecimal()) ));
                 } else if (b?.type == "string" && a?.type == "string") {
-                    stack.push({
-                        type: "string",
-                        value: a.value + b.value,
-                    });
+                    stack.push(Value.newString(a.innerString() + b.innerString()));
                 } else {
                     console.log(
                         "`+` can only be used with number + number or string + string, instead got",
@@ -56,7 +71,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push({ type: "number", value: a.value.sub(b.value) });
+                    stack.push(Value.newNumber(a.innerDecimal().sub(b.value) ));
                 } else {
                     console.log(
                         "`-` can only be used with number + number, instead got",
@@ -68,7 +83,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push({ type: "number", value: a.value.mul(b.value) });
+                    stack.push(Value.newNumber(a.innerDecimal().mul(b.value) ));
                 } else {
                     console.log(
                         "`*` can only be used with number + number, instead got",
@@ -80,7 +95,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push({ type: "number", value: a.value.div(b.value) });
+                    stack.push(Value.newNumber(a.innerDecimal().div(b.value) ));
                 } else {
                     console.log(
                         "`/` can only be used with number + number, instead got",
@@ -92,7 +107,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push({ type: "number", value: a.value.pow(b.value) });
+                    stack.push(Value.newNumber(a.innerDecimal().pow(b.value) ));
                 } else {
                     console.log(
                         "`^` can only be used with number + number, instead got",
@@ -103,10 +118,7 @@ export class Interpreter {
             "sqrt": (stack) => {
                 const a = stack.pop();
                 if (a?.type == "number") {
-                    stack.push({
-                        type: "number",
-                        value: a.value.sqrt(),
-                    });
+                    stack.push(Value.newNumber(a.innerDecimal().sqrt()));
                 } else {
                     console.log(
                         "`sqrt` can only be used with number, instead got",
@@ -118,7 +130,7 @@ export class Interpreter {
                 const a = stack.pop();
                 switch (a?.type) {
                     case "string":
-                        writeStdout(a?.value);
+                        writeStdout(a?.innerString());
                         break;
                     case "number":
                         writeStdout(a?.value.toString());
@@ -142,19 +154,13 @@ export class Interpreter {
                 const a = stack.pop();
                 const b = stack.pop();
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+valueEquals(a!, b!))
-                })
+                stack.push(Value.newNumber(new Decimal(+(a!.equals(b!))) ))
             },
             "!=": (stack) => {
                 const a = stack.pop();
                 const b = stack.pop();
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(-valueEquals(a!, b!))
-                })
+                stack.push(Value.newNumber(new Decimal(-(a!.equals(b!))) ))
             },
             ">": (stack) => {
                 const b = stack.pop();
@@ -164,10 +170,7 @@ export class Interpreter {
                     Deno.exit(1);
                 }
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+a!.value.gt(b!.value))
-                })
+                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().gt(b!.innerDecimal()) )))
             },
             ">=": (stack) => {
                 const b = stack.pop();
@@ -177,10 +180,7 @@ export class Interpreter {
                     Deno.exit(1);
                 }
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+a!.value.gte(b!.value))
-                })
+                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().gte(b!.innerDecimal()) )))
             },
             "<": (stack) => {
                 const b = stack.pop();
@@ -190,10 +190,7 @@ export class Interpreter {
                     Deno.exit(1);
                 }
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+a!.value.lt(b!.value))
-                })
+                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().lt(b!.innerDecimal())) ))
             },
             "<=": (stack) => {
                 const b = stack.pop();
@@ -203,10 +200,7 @@ export class Interpreter {
                     Deno.exit(1);
                 }
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+a!.value.lte(b!.value))
-                })
+                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().lte(b!.innerDecimal())) ))
             },
             "lnot": (stack) => {
                 const a = stack.pop();
@@ -215,10 +209,7 @@ export class Interpreter {
                     Deno.exit(1);
                 }
 
-                stack.push({
-                    type: "number",
-                    value: new Decimal(+!a.value.gte(1))
-                })
+                stack.push(Value.newNumber(new Decimal(+!a.innerDecimal().gte(1)) ))
             }
         };
     }
@@ -233,18 +224,12 @@ export class Interpreter {
         switch (token.type) {
             case "numberLiteral":
                 {
-                    this.stack.push({
-                        type: "number",
-                        value: new Decimal(token.value),
-                    });
+                    this.stack.push(Value.newNumber(new Decimal(token.value), ));
                 }
                 break;
             case "stringLiteral":
                 {
-                    this.stack.push({
-                        type: "string",
-                        value: token.value,
-                    });
+                    this.stack.push(Value.newString(token.value));
                 }
                 break;
             case "keyword":
@@ -253,7 +238,7 @@ export class Interpreter {
                         case "if":
                             {
                                 const a = this.stack.pop();
-                                if (a?.type == "number" && a.value.gte(1)) {
+                                if (a?.type == "number" && a.innerDecimal().gte(1)) {
                                     while (true) {
                                         if (this.tokens.length === 0) {
                                             errorAt(
