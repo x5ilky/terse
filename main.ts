@@ -1,3 +1,4 @@
+import { associator } from "./assoc.ts";
 import { Interpreter } from "./interpreter.ts";
 import { Lexer } from "./lexer.ts";
 
@@ -9,5 +10,6 @@ if (!filename) {
 
 const file = Deno.readTextFileSync(filename);
 const lexer = new Lexer(file, filename);
-const interpreter = new Interpreter(file, lexer.lex());
+const associated = associator(file, lexer.lex());
+const interpreter = new Interpreter(file, associated);
 interpreter.interpret();

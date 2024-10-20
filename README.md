@@ -1,8 +1,7 @@
 # Terse Lang
 
 Terse Lang is a language designed for quick writing of program that do repeated
-mathematical functions.
-(language to do math homework faster)
+mathematical functions. (language to do math homework faster)
 
 ## Proposed Example Syntax
 

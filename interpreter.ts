@@ -1,17 +1,20 @@
 import { Decimal } from "decimal.js";
 import type { Token } from "./lexer.ts";
 import { errorAt } from "./misc.ts";
+import type { Instruction } from "./assoc.ts";
 
 function writeStdout(str: string) {
-    Deno.stdout.writeSync(Uint8Array.from(str.split("").map(a => a.charCodeAt(0))));
+    Deno.stdout.writeSync(
+        Uint8Array.from(str.split("").map((a) => a.charCodeAt(0))),
+    );
 }
 
 class Value {
     type: "number" | "string";
     value: Decimal | string;
-    constructor (type: Value["type"], value: Value["value"]) {
+    constructor(type: Value["type"], value: Value["value"]) {
         this.type = type;
-        this.value = value;      
+        this.value = value;
     }
 
     static newNumber(num: Decimal) {
@@ -22,46 +25,50 @@ class Value {
     }
 
     equals(b: Value): boolean {
-        return this.type == b.type ?
-            this.type == "number" ?
-                this.innerDecimal().eq(b.innerDecimal())
+        return this.type == b.type
+            ? this.type == "number"
+                ? this.innerDecimal().eq(b.innerDecimal())
                 : this.value == b.value
-            : false
+            : false;
     }
 
     innerDecimal(): Decimal {
         if (this.type === "number") {
             return this.value as Decimal;
         }
-        throw new Error("Value isn't number, couldn't extract inner Decimal")
+        throw new Error("Value isn't number, couldn't extract inner Decimal");
     }
     innerString(): string {
         if (this.type === "string") {
             return this.value as string;
         }
-        throw new Error("Value isn't string, couldn't extract inner string")
+        throw new Error("Value isn't string, couldn't extract inner string");
     }
 }
 
 export class Interpreter {
     source: string;
-    tokens: Token[];
+    instructions: Instruction[];
     ip: number;
     stack: Value[];
     functions: { [n: string]: (stack: Value[]) => void };
-    constructor(source: string, tokens: Token[]) {
+    constructor(source: string, instructions: Instruction[]) {
         this.ip = 0;
         this.source = source;
-        this.tokens = tokens;
+        this.instructions = instructions;
         this.stack = [];
         this.functions = {
             "+": (stack) => {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().add(b.innerDecimal()) ));
+                    stack.push(
+                        Value.newNumber(a.innerDecimal().add(b.innerDecimal())),
+                    );
                 } else if (b?.type == "string" && a?.type == "string") {
-                    stack.push(Value.newString(a.innerString() + b.innerString()));
+                    stack.push(
+                        Value.newString(a.innerString() + b.innerString()),
+                    );
                 } else {
                     console.log(
                         "`+` can only be used with number + number or string + string, instead got",
@@ -73,7 +80,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().sub(b.value) ));
+                    stack.push(Value.newNumber(a.innerDecimal().sub(b.value)));
                 } else {
                     console.log(
                         "`-` can only be used with number + number, instead got",
@@ -85,7 +92,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().mul(b.value) ));
+                    stack.push(Value.newNumber(a.innerDecimal().mul(b.value)));
                 } else {
                     console.log(
                         "`*` can only be used with number + number, instead got",
@@ -97,7 +104,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().div(b.value) ));
+                    stack.push(Value.newNumber(a.innerDecimal().div(b.value)));
                 } else {
                     console.log(
                         "`/` can only be used with number + number, instead got",
@@ -109,7 +116,7 @@ export class Interpreter {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().pow(b.value) ));
+                    stack.push(Value.newNumber(a.innerDecimal().pow(b.value)));
                 } else {
                     console.log(
                         "`^` can only be used with number + number, instead got",
@@ -151,160 +158,146 @@ export class Interpreter {
                 }
             },
 
-
             "==": (stack) => {
                 const a = stack.pop();
                 const b = stack.pop();
 
-                stack.push(Value.newNumber(new Decimal(+(a!.equals(b!))) ))
+                stack.push(Value.newNumber(new Decimal(+(a!.equals(b!)))));
             },
             "!=": (stack) => {
                 const a = stack.pop();
                 const b = stack.pop();
 
-                stack.push(Value.newNumber(new Decimal(-(a!.equals(b!))) ))
+                stack.push(Value.newNumber(new Decimal(-(a!.equals(b!)))));
             },
             ">": (stack) => {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (a?.type != "number" || b?.type != "number") {
-                    console.error("`>` takes only number + number, instead got", `${a?.type}, ${b?.type}`);
+                    console.error(
+                        "`>` takes only number + number, instead got",
+                        `${a?.type}, ${b?.type}`,
+                    );
                     Deno.exit(1);
                 }
 
-                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().gt(b!.innerDecimal()) )))
+                stack.push(
+                    Value.newNumber(
+                        new Decimal(+a!.innerDecimal().gt(b!.innerDecimal())),
+                    ),
+                );
             },
             ">=": (stack) => {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (a?.type != "number" || b?.type != "number") {
-                    console.error("`>=` takes only number + number, instead got", `${a?.type}, ${b?.type}`);
+                    console.error(
+                        "`>=` takes only number + number, instead got",
+                        `${a?.type}, ${b?.type}`,
+                    );
                     Deno.exit(1);
                 }
 
-                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().gte(b!.innerDecimal()) )))
+                stack.push(
+                    Value.newNumber(
+                        new Decimal(+a!.innerDecimal().gte(b!.innerDecimal())),
+                    ),
+                );
             },
             "<": (stack) => {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (a?.type != "number" || b?.type != "number") {
-                    console.error("`<` takes only number + number, instead got", `${a?.type}, ${b?.type}`);
+                    console.error(
+                        "`<` takes only number + number, instead got",
+                        `${a?.type}, ${b?.type}`,
+                    );
                     Deno.exit(1);
                 }
 
-                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().lt(b!.innerDecimal())) ))
+                stack.push(
+                    Value.newNumber(
+                        new Decimal(+a!.innerDecimal().lt(b!.innerDecimal())),
+                    ),
+                );
             },
             "<=": (stack) => {
                 const b = stack.pop();
                 const a = stack.pop();
                 if (a?.type != "number" || b?.type != "number") {
-                    console.error("`<=` takes only number + number, instead got", `${a?.type}, ${b?.type}`);
+                    console.error(
+                        "`<=` takes only number + number, instead got",
+                        `${a?.type}, ${b?.type}`,
+                    );
                     Deno.exit(1);
                 }
 
-                stack.push(Value.newNumber(new Decimal(+a!.innerDecimal().lte(b!.innerDecimal())) ))
+                stack.push(
+                    Value.newNumber(
+                        new Decimal(+a!.innerDecimal().lte(b!.innerDecimal())),
+                    ),
+                );
             },
             "lnot": (stack) => {
                 const a = stack.pop();
                 if (a?.type != "number") {
-                    console.error("`lnot` takes only number, instead got", `${a?.type}`);
+                    console.error(
+                        "`lnot` takes only number, instead got",
+                        `${a?.type}`,
+                    );
                     Deno.exit(1);
                 }
 
-                stack.push(Value.newNumber(new Decimal(+!a.innerDecimal().gte(1)) ))
-            }
+                stack.push(
+                    Value.newNumber(new Decimal(+!a.innerDecimal().gte(1))),
+                );
+            },
         };
     }
 
     interpret() {
-        while (this.ip < this.tokens.length) {
+        while (this.ip < this.instructions.length) {
             this.interpretOne();
             this.ip++;
         }
     }
 
     interpretOne() {
-        const token = this.tokens[this.ip];
-        switch (token.type) {
-            case "numberLiteral":
+        const instr = this.instructions[this.ip];
+        switch (instr.type) {
+            case "INumberLiteral":
                 {
-                    this.stack.push(Value.newNumber(new Decimal(token.value), ));
+                    this.stack.push(Value.newNumber(instr.value));
                 }
                 break;
-            case "stringLiteral":
+            case "IStringLiteral":
                 {
-                    this.stack.push(Value.newString(token.value));
+                    this.stack.push(Value.newString(instr.value));
                 }
                 break;
-            case "keyword":
+            case "IIfStatement":
                 {
-                    switch (token.value) {
-                        case "if":
-                            {
-                                const a = this.stack.pop();
-                                if (a?.type == "number" && a.innerDecimal().gte(1)) {
-                                    while (true) {
-                                        if (this.tokens.length === 0) {
-                                            errorAt(
-                                                this.source,
-                                                token,
-                                                "No matching end block for if statement",
-                                            );
-                                        }
-                                        this.ip++;
-                                        if (
-                                            this.tokens[this.ip].type == "keyword" &&
-                                            this.tokens[this.ip].value == "end"
-                                        ) {
-                                            this.ip++;
-                                            break;
-                                        }
-                                        this.interpretOne();
-                                    }
-                                } else {
-                                    let depth = 0;
-                                    while (true) {
-                                        if (this.tokens.length === 0) {
-                                            errorAt(
-                                                this.source,
-                                                token,
-                                                "No matching end block for if statement",
-                                            );
-                                        }
-                                        this.ip++;
-                                        if (
-                                            this.tokens[this.ip].type == "keyword" &&
-                                            ["if", "while", "repeat", "foreach"].includes(this.tokens[this.ip].value)
-                                        ) {
-                                            depth++;
-                                        }
-                                        else if (
-                                            this.tokens[this.ip].type == "keyword" &&
-                                            this.tokens[this.ip].value == "end"
-                                        ) {
-                                            depth--;
-                                            this.ip++;
-                                            if (depth <= 0) {
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
+                    const a = this.stack.pop();
+                    if (a?.type == "number" && a.innerDecimal().gte(1)) {
+                        while (true) {
+                            this.ip++;
+                            if (
+                                this.ip === instr.end
+                            ) {
+                                break;
                             }
-                            break;
-                        default: {
-                            console.error(
-                                "unimplemented: " + JSON.stringify(token),
-                            );
-                            Deno.exit(1);
+                            this.interpretOne();
                         }
+                    } else {
+                        this.ip = instr.end;
                     }
                 }
                 break;
-            case "identifier":
+
+            case "ICall":
                 {
                     const fn = this.functions[
-                        token.value as keyof typeof this.functions
+                        instr.instr as keyof typeof this.functions
                     ];
                     fn(this.stack);
                 }
