@@ -49,7 +49,6 @@ export function errorAt(source: string, loc: Location, error: string): never {
     }
 
     let out = "";
-    console.log(startLine, endLine, startCh, endCh);
     line = 0;
     col = 0;
     for (let i = 0; i < source.length; i++) {
@@ -60,7 +59,7 @@ export function errorAt(source: string, loc: Location, error: string): never {
         }
         if (startLine <= line && line <= endLine) {
             if (i < loc.start || i >= loc.end) {
-                out += " ";
+                out += ".";
             } else {
                 out += char;
             }

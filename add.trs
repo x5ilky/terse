@@ -1,7 +1,8 @@
-5
-
-dup 0 > while 
-    dup prn
-    1 - 
-    dup 0 >
+fn foo
+    number string : number do
+    swap repeat
+        dup prn
+    end
 end
+
+5 "dfsdf" foo

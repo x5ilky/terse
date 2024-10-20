@@ -54,12 +54,16 @@ export class Interpreter {
   instructions: Instruction[];
   ip: number;
   stack: Value[];
-  functions: { [n: string]: (stack: Value[]) => void };
+  callStack: number[];
+  functions: {
+    [n: string]: (stack: Value[], interpreter: Interpreter) => void;
+  };
   constructor(source: string, instructions: Instruction[]) {
     this.ip = 0;
     this.source = source;
     this.instructions = instructions;
     this.stack = [];
+    this.callStack = [];
     this.functions = {
       "+": (stack) => {
         const b = stack.pop();
@@ -259,6 +263,9 @@ export class Interpreter {
         stack.push(a);
         stack.push(b);
       },
+      drop: (stack) => {
+        stack.pop()!;
+      },
     };
   }
 
@@ -339,11 +346,40 @@ export class Interpreter {
           this.ip = instr.endIp;
         }
         break;
-
+      case "IReturn":
+        {
+          this.ip = this.callStack.pop()!;
+        }
+        break;
       case "ICall":
         {
           const fn = this.functions[instr.instr as keyof typeof this.functions];
-          fn(this.stack);
+          if (fn === undefined) {
+            errorAt(this.source, instr, `no function called: ${instr.instr}`);
+          }
+          fn(this.stack, this);
+        }
+        break;
+      case "IFunction":
+        {
+          this.functions[instr.name] = (_stack, int) => {
+            int.callStack.push(this.ip);
+            int.ip = instr.startIp;
+          };
+          this.ip = instr.endIp;
+        }
+        break;
+
+      case "INoop":
+        break;
+      default:
+        {
+          errorAt(
+            this.source,
+            instr,
+            // deno-lint-ignore no-explicit-any
+            `Unimplemented: ${(instr as any).type}`,
+          );
         }
         break;
     }
