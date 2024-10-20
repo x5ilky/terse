@@ -46,9 +46,11 @@ class Value {
 export class Interpreter {
     source: string;
     tokens: Token[];
+    ip: number;
     stack: Value[];
     functions: { [n: string]: (stack: Value[]) => void };
     constructor(source: string, tokens: Token[]) {
+        this.ip = 0;
         this.source = source;
         this.tokens = tokens;
         this.stack = [];
@@ -215,12 +217,14 @@ export class Interpreter {
     }
 
     interpret() {
-        while (this.tokens.length > 0) {
-            this.interpretOne(this.tokens.shift()!);
+        while (this.ip < this.tokens.length) {
+            this.interpretOne();
+            this.ip++;
         }
     }
 
-    interpretOne(token: Token) {
+    interpretOne() {
+        const token = this.tokens[this.ip];
         switch (token.type) {
             case "numberLiteral":
                 {
@@ -247,16 +251,18 @@ export class Interpreter {
                                                 "No matching end block for if statement",
                                             );
                                         }
+                                        this.ip++;
                                         if (
-                                            this.tokens[0].type == "keyword" &&
-                                            this.tokens[0].value == "end"
+                                            this.tokens[this.ip].type == "keyword" &&
+                                            this.tokens[this.ip].value == "end"
                                         ) {
-                                            this.tokens.shift();
+                                            this.ip++;
                                             break;
                                         }
-                                        this.interpretOne(this.tokens.shift()!);
+                                        this.interpretOne();
                                     }
                                 } else {
+                                    let depth = 0;
                                     while (true) {
                                         if (this.tokens.length === 0) {
                                             errorAt(
@@ -265,14 +271,23 @@ export class Interpreter {
                                                 "No matching end block for if statement",
                                             );
                                         }
+                                        this.ip++;
                                         if (
-                                            this.tokens[0].type == "keyword" &&
-                                            this.tokens[0].value == "end"
+                                            this.tokens[this.ip].type == "keyword" &&
+                                            ["if", "while", "repeat", "foreach"].includes(this.tokens[this.ip].value)
                                         ) {
-                                            this.tokens.shift();
-                                            break;
+                                            depth++;
                                         }
-                                        this.tokens.shift();
+                                        else if (
+                                            this.tokens[this.ip].type == "keyword" &&
+                                            this.tokens[this.ip].value == "end"
+                                        ) {
+                                            depth--;
+                                            this.ip++;
+                                            if (depth <= 0) {
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }

@@ -1,0 +1,6 @@
+0 0 > if 
+    "Hello, world!" prn
+    1 1 == if 
+        "nmop" prn
+    end
+end
