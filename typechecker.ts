@@ -1,4 +1,5 @@
 import type { Instruction } from "./assoc.ts";
+import { Chainmap } from "./chainmap.ts";
 import { errorAt } from "./misc.ts";
 
 class Type {
@@ -28,11 +29,13 @@ export class Typechecker {
     stack: Type[];
     functions: {[n: string]: {inputs: Type[], outputs: Type[]}}
     instructions: Instruction[];
+    bindings: Chainmap<string, Type>;
     ip: number;
 
     constructor(source: string, instructions: Instruction[]) {
         this.source = source;
         this.instructions = instructions;
+        this.bindings = new Chainmap();
         this.functions = {
             "+": {inputs: [TNumber(), TNumber()], outputs: [TNumber()]},
             "-": {inputs: [TNumber(), TNumber()], outputs: [TNumber()]},
@@ -111,11 +114,24 @@ export class Typechecker {
                         errorAt(this.source, instr, `While statement predicate should give 1 more element (predicate); instead got ${this.stack.length-startingSize} more element(s) after while statement`)
                     }
                 } break;
-                case "ILetBinding": break;
+                case "ILetBinding": {
+                    this.bindings.push();
+                    if (instr.names.length < this.stack.length) {
+                        errorAt(this.source, instr, `binding requires ${instr.names.length} values to be on stack, only received ${this.stack.length}`)
+                    }
+                    for (const binding of instr.names.toReversed()) {
+                        this.bindings.set(binding, this.stack.pop()!);
+                    }
+                } break;
                 case "ICall": {
                     const fn = this.functions[instr.instr];
                     if (fn === undefined) {
-                        errorAt(this.source, instr, `no function called ${instr.instr}`)
+                        const binding = this.bindings.get(instr.instr);
+                        if (binding === undefined) {
+                            errorAt(this.source, instr, `no function or binding called ${instr.instr}`)
+                        }
+                        this.stack.push(this.bindings.get(instr.instr)!)
+                        return;
                     }
                     if (fn.inputs.length > this.stack.length) {
                         errorAt(this.source, instr, `not enough elements on stack to call ${instr.instr}; ${instr.instr} takes ${fn.inputs.length} arguments, instead received ${this.stack.length} arguments.\nExpected: ${fn.inputs.join(", ")}; Received: ${this.stack.toReversed().join(", ")}`)
@@ -127,8 +143,8 @@ export class Typechecker {
                     }
                     for (let i = 0; i < fn.inputs.length; i++)
                         this.stack.pop();
-                    for (let i = 0; i < fn.inputs.length; i++)
-                        this.stack.push(fn.inputs[i]);
+                    for (let i = 0; i < fn.outputs.length; i++)
+                        this.stack.push(fn.outputs[i]);
 
                 } break;
                 case "IFunction": {
@@ -145,7 +161,7 @@ export class Typechecker {
                         this.ip++;
                     }
                     if (fn.outputs.length !== this.stack.length) {
-                        errorAt(this.source, instr, "Mismatched output types")
+                        errorAt(this.source, instr, `Expected function to leave ${fn.outputs.length} on stack. Expected: ${fn.outputs.map(a => a.name).join(", ")}; Received: ${this.stack.map(a => a.name).join(", ")}`)
                     }
                     for (let i = 0; i < fn.outputs.length; i++) {
                         if (!fn.outputs[i].valid(this.stack[i])) {
@@ -155,7 +171,7 @@ export class Typechecker {
                     this.stack = before;
 
                 } break;
-                case "IDropBinding": 
+                case "IDropBinding": this.bindings.pop(); break;
                 case "IReturn":
                 case "INoop": break;
             }

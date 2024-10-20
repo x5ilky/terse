@@ -229,17 +229,20 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                     }
                                     outputs.push(type.value);
                                 }
-                                const start = instructions.length;
+                                endStack.push(instructions.length);
                                 instructions.push({
                                     ...token,
                                     type: "IFunction",
                                     endIp: -1,
-                                    startIp: start,
+                                    startIp: instructions.length + 1,
                                     inputs,
                                     output: outputs,
                                     name: name.value,
                                 });
-                                endStack.push(start);
+                                instructions.push({
+                                    ...token,
+                                    type: "INoop",
+                                })
                             }
                             break;
                         case "end":

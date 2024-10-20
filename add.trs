@@ -1,1 +1,9 @@
-1034 "test" >
+fn foo
+    number string : number do
+    let a b do
+        a repeat
+            b pr
+        end
+        a
+    end
+end

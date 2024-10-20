@@ -9,20 +9,20 @@ mathematical functions. (language to do math homework faster)
 # comments
 
 # adding
-1 2 + prl # prl prints top element of stack to stdout with a newline
+1 2 + prn # prn prints top element of stack to stdout with a newline
 
 # input
 nip sip bip # number input, string input, bool input
 
 # control flow
-cond if
+<cond> if
     ...
 end
-n repeat
+<n> repeat
     ...
 end
 
-pred while
+while <pred> do
     ...
 end
 
@@ -30,10 +30,12 @@ end
 
 # prints out a string n times
 fn foo
-    a number b string : number do
-    a repeat
-        b pr 
+    number string : number do
+    let a b do
+        a repeat
+            b pr 
+        end
+        a
     end
-    a
 end
 ```
