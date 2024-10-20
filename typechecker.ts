@@ -54,6 +54,9 @@ export class Typechecker {
             "dup": { inputs: [TAny()], outputs: [TAny(), TAny()] },
             "drop": { inputs: [TAny()], outputs: [TAny()] },
             "swap": { inputs: [TAny(), TAny()], outputs: [TAny(), TAny()] },
+
+            "ipn": { inputs: [TString()], outputs: [TNumber() ]},
+            "ips": { inputs: [TString()], outputs: [TString() ]},
         };
         this.stack = [];
         this.ip = 0;

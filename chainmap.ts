@@ -15,6 +15,6 @@ export class Chainmap<K, V> {
         this.stacks[this.stacks.length - 1].set(k, v);
     }
     get(k: K) {
-        return this.stacks[this.stacks.length - 1].get(k);
+        return this.stacks[this.stacks.length - 1]?.get(k);
     }
 }

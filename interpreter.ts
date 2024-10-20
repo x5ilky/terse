@@ -48,6 +48,15 @@ class Value {
         }
         throw new Error("Value isn't string, couldn't extract inner string");
     }
+
+    toRepresentable(): string {
+        switch (this.type) {
+            case "string":
+                return this.innerString();
+            case "number":
+                return this.innerDecimal().toString();
+        }
+    }
 }
 
 export class Interpreter {
@@ -278,14 +287,28 @@ export class Interpreter {
             drop: (stack) => {
                 stack.pop()!;
             },
+
+            ipn: (stack) => {
+                const value = new Decimal(
+                    prompt(stack.pop()?.toRepresentable()) ?? "0",
+                );
+                stack.push(Value.newNumber(value));
+            },
+            ips: (stack) => {
+                const value = 
+                    prompt(stack.pop()?.toRepresentable()) ?? "";
+                stack.push(Value.newString(value));
+            },
         };
     }
 
     interpret() {
+        this.bindings.push();
         while (this.ip < this.instructions.length) {
             this.interpretOne();
             this.ip++;
         }
+        this.bindings.pop();
     }
 
     interpretOne() {

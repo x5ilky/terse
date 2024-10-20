@@ -7,3 +7,6 @@ fn foo
         a
     end
 end
+
+"times: " ipn
+"Hello, world!" foo
