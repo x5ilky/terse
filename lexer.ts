@@ -83,6 +83,8 @@ export class Lexer {
                             case "r": buffer += "\r"; break;
                             case "t": buffer += "\t"; break;
                             case "b": buffer += "\b"; break;
+                            case "\"": buffer += "\""; break;
+                            case "\\": buffer += "\\"; break;
                             case "x": {
                                 const hex = this.eat() + this.eat();
                                 const h = parseInt(hex, 16);
