@@ -57,6 +57,9 @@ export class Typechecker {
 
             "ipn": { inputs: [TString()], outputs: [TNumber() ]},
             "ips": { inputs: [TString()], outputs: [TString() ]},
+
+            "str2num": {inputs: [TString()], outputs: [TNumber()]},
+            "num2str": {inputs: [TNumber()], outputs: [TString()]},
         };
         this.stack = [];
         this.ip = 0;

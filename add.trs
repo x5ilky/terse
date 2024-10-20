@@ -13,5 +13,5 @@ fn ipne
     "" ipn
 end
 
-ipne
+"input: " ipn
 "Hello, world!" foo

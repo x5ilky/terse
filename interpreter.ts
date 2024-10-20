@@ -294,6 +294,15 @@ export class Interpreter {
                     await asyncPrompt(stack.pop()?.toRepresentable()) ?? "";
                 stack.push(Value.newString(value));
             },
+            
+            str2num: stack => {
+                const str = stack.pop()!;
+                stack.push(Value.newNumber(new Decimal(str.innerString())))
+            },
+            num2str: stack => {
+                const num = stack.pop()!;
+                stack.push(Value.newString(num.innerDecimal().toString()))
+            }
         };
     }
 
