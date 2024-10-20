@@ -135,16 +135,20 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 }
                                 const whileBlock = instructions[whileIdx];
                                 if (whileBlock.type !== "IWhileStatement") {
-                                    errorAt(source, token, "do keyword can only be used with `while`")
+                                    errorAt(
+                                        source,
+                                        token,
+                                        "do keyword can only be used with `while`",
+                                    );
                                 }
                                 whileBlock.bodyIp = instructions.length;
                                 instructions.push({
                                     ...token,
                                     type: "INoop",
-                                })
+                                });
                                 resolvedWhiles--;
-                                
-                            } break;
+                            }
+                            break;
                         case "let":
                             {
                                 const names = [];
@@ -242,7 +246,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 instructions.push({
                                     ...token,
                                     type: "INoop",
-                                })
+                                });
                             }
                             break;
                         case "end":
@@ -344,7 +348,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
     if (resolvedWhiles) {
         for (const instr of instructions) {
             if (instr.type === "IWhileStatement" && instr.bodyIp === -1) {
-                errorAt(source, instr, "while has no matching do keyword")
+                errorAt(source, instr, "while has no matching do keyword");
             }
         }
     }
