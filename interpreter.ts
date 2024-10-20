@@ -297,7 +297,11 @@ export class Interpreter {
                 {
                     const a = this.stack.pop();
 
-                    for (let i = new Decimal(0); i.lt(a!.innerDecimal()); i = i.add(1)) {
+                    for (
+                        let i = new Decimal(0);
+                        i.lt(a!.innerDecimal());
+                        i = i.add(1)
+                    ) {
                         this.ip = instr.start;
                         while (true) {
                             this.ip++;
@@ -310,7 +314,6 @@ export class Interpreter {
                         }
                     }
                     this.ip = instr.end;
-                    
                 }
                 break;
 

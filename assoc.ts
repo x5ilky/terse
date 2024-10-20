@@ -26,10 +26,10 @@ export type IRepeatStatement = {
     type: "IRepeatStatement";
     start: number;
     end: number;
-}
+};
 export type INoop = {
     type: "INoop";
-}
+};
 export type ICall = {
     type: "ICall";
     instr: string;
@@ -99,8 +99,8 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                     }
                                 }
                                 instructions.push({
-                                    type: "INoop"
-                                })
+                                    type: "INoop",
+                                });
                             }
                             break;
                     }
