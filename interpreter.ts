@@ -298,7 +298,7 @@ export class Interpreter {
           if (a?.type == "number" && a.innerDecimal().gte(1)) {
             while (true) {
               this.ip++;
-              if (this.ip === instr.end) {
+              if (this.ip === instr.endIp) {
                 break;
               }
               this.interpretOne();
@@ -337,7 +337,7 @@ export class Interpreter {
               );
             }
             if (!a.innerDecimal().gte(1)) break;
-            this.ip = instr.startIp;
+            this.ip = instr.bodyIp;
             while (true) {
               this.ip++;
               if (this.ip === instr.endIp) {
