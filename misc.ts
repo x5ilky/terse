@@ -69,3 +69,24 @@ export function errorAt(source: string, loc: Location, error: string): never {
 
     Deno.exit(1);
 }
+
+export function writeStdout(str: string) {
+    Deno.stdout.writeSync(
+        Uint8Array.from(str.split("").map((a) => a.charCodeAt(0))),
+    );
+}
+
+export async function asyncPrompt(str?: string) {
+  if (str) writeStdout(str);
+  const buf = new Uint8Array(1024);
+  /* Reading into `buf` from start.
+   * buf.subarray(0, n) is the read result.
+   * If n is instead Deno.EOF, then it means that stdin is closed.
+   */
+  const n = await Deno.stdin.read(buf); 
+  if (n == null) {
+    return undefined
+  } else {
+    return new TextDecoder().decode(buf.subarray(0, n));
+  }
+}

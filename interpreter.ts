@@ -1,13 +1,8 @@
 import { Decimal } from "decimal.js";
-import { errorAt } from "./misc.ts";
+import { asyncPrompt, errorAt, writeStdout } from "./misc.ts";
 import type { Instruction } from "./assoc.ts";
 import { Chainmap } from "./chainmap.ts";
 
-function writeStdout(str: string) {
-    Deno.stdout.writeSync(
-        Uint8Array.from(str.split("").map((a) => a.charCodeAt(0))),
-    );
-}
 
 class Value {
     type: "number" | "string";
@@ -66,7 +61,7 @@ export class Interpreter {
     stack: Value[];
     callStack: number[];
     functions: {
-        [n: string]: (stack: Value[], interpreter: Interpreter) => void;
+        [n: string]: (stack: Value[], interpreter: Interpreter) => Promise<void> | void;
     };
     bindings: Chainmap<string, Value>;
     constructor(source: string, instructions: Instruction[]) {
@@ -288,30 +283,30 @@ export class Interpreter {
                 stack.pop()!;
             },
 
-            ipn: (stack) => {
+            ipn: async (stack) => {
                 const value = new Decimal(
-                    prompt(stack.pop()?.toRepresentable()) ?? "0",
+                    (await asyncPrompt(stack.pop()?.toRepresentable()) ?? "0").trim(),
                 );
                 stack.push(Value.newNumber(value));
             },
-            ips: (stack) => {
+            ips: async (stack) => {
                 const value = 
-                    prompt(stack.pop()?.toRepresentable()) ?? "";
+                    await asyncPrompt(stack.pop()?.toRepresentable()) ?? "";
                 stack.push(Value.newString(value));
             },
         };
     }
 
-    interpret() {
+    async interpret() {
         this.bindings.push();
         while (this.ip < this.instructions.length) {
-            this.interpretOne();
+            await this.interpretOne();
             this.ip++;
         }
         this.bindings.pop();
     }
 
-    interpretOne() {
+    async interpretOne() {
         const instr = this.instructions[this.ip];
         switch (instr.type) {
             case "INumberLiteral":
@@ -404,7 +399,7 @@ export class Interpreter {
                         }
                         this.stack.push(this.bindings.get(instr.instr)!);
                     } else {
-                        fn(this.stack, this);
+                        await fn(this.stack, this);
                     }
                 }
                 break;

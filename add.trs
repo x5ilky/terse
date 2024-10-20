@@ -8,5 +8,10 @@ fn foo
     end
 end
 
-"times: " ipn
+fn ipne
+    : number do
+    "" ipn
+end
+
+ipne
 "Hello, world!" foo
