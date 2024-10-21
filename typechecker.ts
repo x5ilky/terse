@@ -40,7 +40,10 @@ export class Typechecker {
         this.instructions = instructions;
         this.bindings = new Chainmap();
         this.functions = {
+            "???": { inputs: [], outputs: [] },
             "+": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
+            "ptr+": {inputs: [TPointer(), TNumber()], outputs: [TPointer()]},
+            "str+": {inputs: [TString(), TString()], outputs: [TString()]},
             "-": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "*": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "/": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
@@ -61,6 +64,7 @@ export class Typechecker {
 
             "str2num": {inputs: [TString()], outputs: [TNumber()]},
             "num2str": {inputs: [TNumber()], outputs: [TString()]},
+            "str2countstr": {inputs: [TString()], outputs: [TPointer(), TNumber()]},
 
             "memalloc": {inputs: [TNumber()], outputs: [TPointer()]},
             "memfree": {inputs: [TPointer()], outputs: []},

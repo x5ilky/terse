@@ -65,6 +65,15 @@ export class Lexer {
                 this.location.end = this.location.start;
                 continue;
             }
+            if (ch == '/') {
+                if (this.peek() == '/') {
+                    // comment
+                    this.eat();
+                    while (this.peek() !== "\n" && this.peek() !== undefined) this.eat();
+                    this.location.start = this.location.end;
+                    continue;
+                }
+            }
             if (ch == '"') {
                 // string
                 while (true) {

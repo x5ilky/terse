@@ -3,6 +3,29 @@ fn prn
     pr "\n" pr
 end
 
+fn remove-final
+    string number : string do
+    swap 1 memalloc
+    swap str2countstr
+
+    let remove newstrcount str count do
+        0 newstrcount memsave
+        ""
+        count remove - repeat
+            // get n-th char of str
+            str newstrcount memload ptr+ memload
+            
+            str+
+
+            // increment newstrcount
+            newstrcount memload 1 + newstrcount memsave
+        end
+        
+        newstrcount memfree
+        str memfree
+    end
+end
+
 fn ipn
     string : number do
     ips str2num
@@ -17,6 +40,7 @@ fn ipse
     : string do
     "" ips
 end
+
 
 fn cast(any) any : any do end
 

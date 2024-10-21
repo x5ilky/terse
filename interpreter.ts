@@ -43,6 +43,12 @@ class Value {
         }
         throw new Error("Value isn't number, couldn't extract inner Decimal");
     }
+    innerPointer(): number {
+        if (this.type === "ptr") {
+            return this.value as number;
+        }
+        throw new Error("Value isn't number, couldn't extract inner Decimal");
+    }
     innerString(): string {
         if (this.type === "string") {
             return this.value as string;
@@ -86,23 +92,30 @@ export class Interpreter {
         ];
         this.bindings = new Chainmap();
         this.functions = {
+            "???": stack => {
+                console.dir(stack.map(a => a.type), {depth: null});
+                Deno.exit(1);
+            },
             "+": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (b?.type == "number" && a?.type == "number") {
+                const b = stack.pop()!;
+                const a = stack.pop()!;
                     stack.push(
                         Value.newNumber(a.innerDecimal().add(b.innerDecimal())),
                     );
-                } else if (b?.type == "string" && a?.type == "string") {
-                    stack.push(
-                        Value.newString(a.innerString() + b.innerString()),
-                    );
-                } else {
-                    console.log(
-                        "`+` can only be used with number + number or string + string, instead got",
-                        `${b?.type} + ${a?.type}`,
-                    );
-                }
+            },
+            "ptr+": (stack) => {
+                const b = stack.pop()!.innerDecimal();
+                const a = stack.pop()!.innerPointer();
+                stack.push(
+                    Value.newPointer(Math.round(a + b.toNumber())),
+                );
+            },
+            "str+": stack => {
+                const b = stack.pop()!;
+                const a = stack.pop()!;
+                stack.push(
+                    Value.newString(a.innerString() + b.innerString()),
+                );
             },
             "-": (stack) => {
                 const b = stack.pop();
@@ -329,6 +342,14 @@ export class Interpreter {
                 stack.push(
                     v
                 );
+            },
+
+            str2countstr: (stack, int) => {
+                const str = stack.pop()!.innerString();
+                const alloc = int.memoryAlloc(str.length);
+                for (let i = 0; i < str.length; i++) int.memory[i + alloc] = Value.newString(str[i]);
+                stack.push(Value.newPointer(alloc));
+                stack.push(Value.newNumber(new Decimal(str.length)));
             }
         };
     }
@@ -549,7 +570,7 @@ export class Interpreter {
                     this.memoryMap.splice(i, 2, {
                         start: part.start,
                         size: part.size + this.memoryMap[i+1].size,
-                        free: false
+                        free: true
                     });
                     this.memoryCondense();
                 }

@@ -1,11 +1,3 @@
 import "std.trs"
 
-1 memalloc
-dup
-let a do
-    "input: " ipn
-    a memsave
-
-    a memload prn
-end
-memfree
+"strip\r\n" 2 remove-final prn
