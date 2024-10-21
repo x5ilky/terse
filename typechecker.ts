@@ -82,6 +82,10 @@ export class Typechecker {
             this.typecheckOne();
             this.ip++;
         }
+        if (this.stack.length) {
+            console.error(`error: ${this.stack.length} elements left on stack at end of program`);
+            Deno.exit(1);
+        }
     }
 
     typecheckOne() {
@@ -209,8 +213,8 @@ export class Typechecker {
                             this.getFileSource(instr),
                             instr,
                             `not enough elements on stack to call ${instr.instr}; ${instr.instr} takes ${fn.inputs.length} arguments, instead received ${this.stack.length} arguments.\nExpected: ${
-                                fn.inputs.join(", ")
-                            }; Received: ${this.stack.toReversed().join(", ")}`,
+                                fn.inputs.map(a => a.name).join(", ")
+                            }; Received: ${this.stack.map(a => a.name).toReversed().join(", ")}`,
                         );
                     }
                     for (let i = 0; i < fn.inputs.length; i++) {
