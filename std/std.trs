@@ -17,3 +17,8 @@ fn ipse
     : string do
     "" ips
 end
+
+fn cast(any) any : any do end
+
+fn cast(number) any : number do cast(any) end
+fn cast(string) any : string do cast(any) end
