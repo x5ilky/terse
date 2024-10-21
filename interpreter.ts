@@ -163,17 +163,6 @@ export class Interpreter {
                         break;
                 }
             },
-            prn: (stack) => {
-                const a = stack.pop();
-                switch (a?.type) {
-                    case "string":
-                        console.log(a?.value);
-                        break;
-                    case "number":
-                        console.log(a?.value.toString());
-                        break;
-                }
-            },
 
             "==": (stack) => {
                 const a = stack.pop();
@@ -300,7 +289,7 @@ export class Interpreter {
             
             str2num: stack => {
                 const str = stack.pop()!;
-                stack.push(Value.newNumber(new Decimal(str.innerString())))
+                stack.push(Value.newNumber(new Decimal(str.innerString().trim())))
             },
             num2str: stack => {
                 const num = stack.pop()!;

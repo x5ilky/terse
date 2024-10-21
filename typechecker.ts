@@ -46,7 +46,6 @@ export class Typechecker {
             "^": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "sqrt": { inputs: [TNumber()], outputs: [TNumber()] },
             "pr": { inputs: [TAny()], outputs: [] },
-            "prn": { inputs: [TAny()], outputs: [] },
             "==": { inputs: [TAny(), TAny()], outputs: [TNumber()] },
             "!=": { inputs: [TAny(), TAny()], outputs: [TNumber()] },
             ">=": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
@@ -57,7 +56,6 @@ export class Typechecker {
             "drop": { inputs: [TAny()], outputs: [TAny()] },
             "swap": { inputs: [TAny(), TAny()], outputs: [TAny(), TAny()] },
 
-            "ipn": { inputs: [TString()], outputs: [TNumber() ]},
             "ips": { inputs: [TString()], outputs: [TString() ]},
 
             "str2num": {inputs: [TString()], outputs: [TNumber()]},

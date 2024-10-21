@@ -1,3 +1,13 @@
+fn prn
+    any : do
+    pr "\n" pr
+end
+
+fn ipn
+    string : number do
+    ips str2num
+end
+
 fn ipne
     : number do
     "" ipn
