@@ -25,9 +25,20 @@ if (Deno.args.includes("-d")) {
     let out = "";
     for (let i = 0; i < associated.length; i++) {
         const instr = associated[i];
-        out += `${i}: ${instr.type}`;
-        if ("endIp" in instr) {
-            out += ` -> ${instr.endIp}`;
+        out += `[${i}] `
+        switch(instr.type) {
+            case "INumberLiteral": out += `${instr.type}: ${instr.value.toString()}`; break;
+            case "IStringLiteral": out += `${instr.type}: ${JSON.stringify(instr.value)}`; break;
+            case "IIfStatement": out += `${instr.type}: Else -> ${instr.elseIp} -> ${instr.endIp}`; break;
+            case "IRepeatStatement": out += `${instr.type} -> ${instr.endIp}`; break;
+            case "IWhileStatement": out += `${instr.type}: Cond -> ${instr.predicateIp} -> ${instr.bodyIp} -> ${instr.endIp}`; break;
+            case "ILetBinding": out += `${instr.type}: Bind: ${instr.names}`; break;
+            case "ICall": out += `${instr.type}: ${instr.instr}`; break;
+            case "IFunction": out += `${instr.type}; Name: ${instr.name}; Start -> ${instr.startIp}; Skip -> ${instr.endIp}`; break;
+            case "IImport": out += `${instr.type}: ${instr.path}`; break;
+            case "IDropBinding":
+            case "IReturn":
+            case "INoop": out += `${instr.type}`; break;
         }
         out += "\n";
     }
