@@ -409,13 +409,17 @@ export class Interpreter {
                     if (a?.type == "number" && a.innerDecimal().gte(1)) {
                         while (true) {
                             this.ip++;
-                            if (this.ip === instr.endIp) {
+                            if (this.ip >= (instr.elseIp === -1 ? instr.endIp : instr.elseIp)) {
                                 break;
                             }
+                            console.log(this.ip, instr)
                             this.interpretOne();
                         }
-                    } else {
                         this.ip = instr.endIp;
+                    } else {
+                        if (instr.elseIp !== -1)
+                        this.ip = instr.elseIp;
+                        else this.ip = instr.endIp;
                     }
                 }
                 break;

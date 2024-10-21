@@ -137,6 +137,7 @@ export class Lexer {
                 } else {
                     switch (buffer) {
                         case "if":
+                        case "else":
                         case "end":
                         case "repeat":
                         case "while":

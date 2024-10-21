@@ -126,18 +126,43 @@ export class Typechecker {
                     }
                     const beginSize = this.stack.length;
 
-                    while (this.ip < instr.endIp) {
-                        this.ip++;
-                        this.typecheckOne();
-                    }
-                    if (this.stack.length !== beginSize) {
-                        errorAt(
-                            this.getFileSource(instr),
-                            instr,
-                            `Stack size inside and outside of if statement are different; got ${
-                                this.stack.length - beginSize
-                            } more element(s) in if branch`,
-                        );
+                    if (instr.elseIp === -1) {
+                        while (this.ip < instr.endIp) {
+                            this.ip++;
+                            this.typecheckOne();
+                        }
+                        if (this.stack.length !== beginSize) {
+                            errorAt(
+                                this.getFileSource(instr),
+                                instr,
+                                `Stack size inside and outside of if statement are different; got ${
+                                    this.stack.length - beginSize
+                                } more element(s) in if branch`,
+                            );
+                        }
+                    } else {
+                        const stack = this.stack.map(a => new Type(a.name));
+                        while (this.ip < instr.elseIp) {
+                            this.ip++;
+                            this.typecheckOne();
+                        }
+                        const mainStack = this.stack.length;
+                        this.stack = stack;
+                        this.ip = instr.elseIp;
+                        while (this.ip < instr.endIp) {
+                            this.ip++;
+                            this.typecheckOne();
+                        }
+
+                        if (mainStack !== this.stack.length) {
+                            errorAt(
+                                this.getFileSource(instr),
+                                instr,
+                                `Stack size in different branchs of if statement are different; got ${
+                                    mainStack - this.stack.length
+                                } more element(s) in if branch compared to else branch`,
+                            );
+                        }
                     }
                 }
                 break;

@@ -33,6 +33,7 @@ export type IImport = {
 };
 export type IIfStatement = {
     type: "IIfStatement";
+    elseIp: number;
     endIp: number;
 };
 export type IRepeatStatement = {
@@ -105,10 +106,25 @@ export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[]
                                 instructions.push({
                                     ...token,
                                     type: "IIfStatement",
+                                    elseIp: -1,
                                     endIp: -1,
                                 });
                             }
                             break;
+                        case "else": 
+                            {
+                                const int = endStack.pop()!;
+                                const instr = instructions[int];
+                                if (instr.type !== "IIfStatement") {
+                                    errorAt(fileAssoc[instr.file], instr, "Else not matching if statement")
+                                }
+                                instr.elseIp = instructions.length;
+                                instructions.push({
+                                    ...token,
+                                    type: "INoop"
+                                })
+                                endStack.push(int);
+                            } break;
                         case "repeat":
                             {
                                 endStack.push(instructions.length);
