@@ -24,6 +24,7 @@ class Type {
 
 const TNumber = () => new Type("number");
 const TString = () => new Type("string");
+const TPointer = () => new Type("pointer");
 const TAny = () => new Type("any");
 
 export class Typechecker {
@@ -60,6 +61,11 @@ export class Typechecker {
 
             "str2num": {inputs: [TString()], outputs: [TNumber()]},
             "num2str": {inputs: [TNumber()], outputs: [TString()]},
+
+            "memalloc": {inputs: [TNumber()], outputs: [TPointer()]},
+            "memfree": {inputs: [TPointer()], outputs: []},
+            "memsave": {inputs: [TAny(), TPointer()], outputs: []},
+            "memload": {inputs: [TPointer()], outputs: [TAny()]},
         };
         this.stack = [];
         this.ip = 0;

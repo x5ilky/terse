@@ -1,1 +1,10 @@
 import "std.trs"
+
+1 memalloc
+
+let a do
+    "input: " ipn
+    a memsave
+
+    a memload prn
+end

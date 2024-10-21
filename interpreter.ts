@@ -8,8 +8,8 @@ import type { FileAssoc } from "./main.ts";
 
 
 class Value {
-    type: "number" | "string";
-    value: Decimal | string;
+    type: "number" | "string" | "ptr";
+    value: Decimal | string | number;
     constructor(type: Value["type"], value: Value["value"]) {
         this.type = type;
         this.value = value;
@@ -21,6 +21,9 @@ class Value {
 
     static newNumber(num: Decimal) {
         return new Value("number", num);
+    }
+    static newPointer(num: number) {
+        return new Value("ptr", num);
     }
     static newString(num: string) {
         return new Value("string", num);
@@ -53,6 +56,8 @@ class Value {
                 return this.innerString();
             case "number":
                 return this.innerDecimal().toString();
+            case "ptr":
+                return `<ptr: ${this.value as number}>`;
         }
     }
 }
@@ -60,6 +65,8 @@ class Value {
 export class Interpreter {
     fileAssoc: FileAssoc;
     instructions: Instruction[];
+    memory: Value[];
+    memoryMap: {start: number, size: number, free: boolean}[]
     ip: number;
     stack: Value[];
     callStack: number[];
@@ -73,6 +80,10 @@ export class Interpreter {
         this.instructions = instructions;
         this.stack = [];
         this.callStack = [];
+        this.memory = [];
+        this.memoryMap = [
+            {free: true, size: 300000, start: 0}
+        ];
         this.bindings = new Chainmap();
         this.functions = {
             "+": (stack) => {
@@ -160,6 +171,9 @@ export class Interpreter {
                         break;
                     case "number":
                         writeStdout(a?.value.toString());
+                        break;
+                    case "ptr":
+                        writeStdout((a.value as number).toString());
                         break;
                 }
             },
@@ -294,6 +308,27 @@ export class Interpreter {
             num2str: stack => {
                 const num = stack.pop()!;
                 stack.push(Value.newString(num.innerDecimal().toString()))
+            },
+
+            memalloc: (stack, int) => {
+                const size = stack.pop()!;
+                stack.push(Value.newPointer(int.memoryAlloc(Math.floor(size.innerDecimal().toNumber()))))
+            },
+            memfree: (stack, int) => {
+                const ptr = stack.pop()!;
+                int.memoryFree(Math.floor(ptr.innerDecimal().toNumber()))
+            },
+            memsave: (stack, int) => {
+                const ptr = stack.pop()!;
+                const value = stack.pop()!;
+                int.memory[Math.floor(ptr.value as number)] = value;
+            },
+            memload: (stack, int) => {
+                const ptr = stack.pop()!;
+                const v = int.memory[ptr.value as number];
+                stack.push(
+                    v
+                );
             }
         };
     }
@@ -471,6 +506,50 @@ export class Interpreter {
                     );
                 }
                 break;
+        }
+    }
+    
+    memoryAlloc(size: number): number {
+        for (let i = 0; i < this.memoryMap.length; i++) {
+            const part = this.memoryMap[i];
+            if (!part.free) continue;
+            if (part.size >= size) {
+                this.memoryMap.splice(i, 2, {free: false, size, start: part.start}, {free: true, size: part.size - size, start: part.start + size});
+                this.memoryCondense();
+                return part.start;
+            }
+        }
+        throw new Error("Ran out of memory")
+    }
+
+    memoryFree(ptr: number) {
+        const map = this.memoryMap.find(a => a.start === ptr)!;
+        this.memoryMap.splice(
+            this.memoryMap.findIndex(a => a.start === ptr)!,
+            1,
+            {
+                free: true,
+                size: map.size,
+                start: map.start
+            }
+        );
+        this.memoryCondense();
+    }
+
+    memoryCondense() {
+        for (let i = 0; i < this.memoryMap.length; i++) {
+            const part = this.memoryMap[i];
+            if (part.free) {
+                if (this.memoryMap?.[i+1] === undefined) continue;
+                if (this.memoryMap[i+1].free) {
+                    this.memoryMap.splice(i, 2, {
+                        start: part.start,
+                        size: part.size + this.memoryMap[i+1].size,
+                        free: false
+                    });
+                    this.memoryCondense();
+                }
+            }
         }
     }
 }
