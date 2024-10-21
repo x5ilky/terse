@@ -25,6 +25,11 @@ if (Deno.args.includes("-d")) {
     let out = "";
     for (let i = 0; i < associated.length; i++) {
         const instr = associated[i];
+        if (Deno.args.includes("-dd")) {
+            if (instr.file !== filename) {
+                continue;
+            }
+        }
         out += `[${i}] `
         switch(instr.type) {
             case "INumberLiteral": out += `${instr.type}: ${instr.value.toString()}`; break;
