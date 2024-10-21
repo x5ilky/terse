@@ -67,11 +67,13 @@ export class Interpreter {
         [n: string]: (stack: Value[], interpreter: Interpreter) => Promise<void> | void;
     };
     bindings: Chainmap<string, Value>;
+    memory: Value[];
     constructor(fileAssoc: FileAssoc, instructions: Instruction[]) {
         this.ip = 0;
         this.fileAssoc = fileAssoc;
         this.instructions = instructions;
         this.stack = [];
+        this.memory = [];
         this.callStack = [];
         this.bindings = new Chainmap();
         this.functions = {

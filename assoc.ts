@@ -14,6 +14,9 @@ export type InstructionBase =
     | ILetBinding
     | IDropBinding
     | ICall
+    | IFunctionStart
+    | IVarDefine
+    | IVarDrop
     | IReturn
     | IFunction
     | IImport
@@ -57,12 +60,23 @@ export type IDropBinding = {
 export type INoop = {
     type: "INoop";
 };
+export type IFunctionStart = {
+    type: "IFunctionStart";
+};
 export type IReturn = {
     type: "IReturn";
 };
 export type ICall = {
     type: "ICall";
     instr: string;
+};
+export type IVarDefine = {
+    type: "IVarDefine";
+    name: string;
+    endIp: number;
+};
+export type IVarDrop = {
+    type: "IVarDrop";
 };
 export type IFunction = {
     type: "IFunction";
@@ -254,6 +268,10 @@ export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[]
                                     ...token,
                                     type: "INoop",
                                 });
+                                instructions.push({
+                                    ...token,
+                                    type: "IFunctionStart",
+                                });
                             }
                             break;
                         case "end":
@@ -270,6 +288,7 @@ export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[]
                                     case "IIfStatement":
                                     case "IRepeatStatement":
                                     case "IWhileStatement":
+                                    case "IVarDefine":
                                         {
                                             start.endIp = instructions.length;
                                             start.end = token.end;
@@ -282,6 +301,11 @@ export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[]
                                             instructions.push({
                                                 ...token,
                                                 type: "IReturn",
+                                            });
+                                            instructions.push({
+                                                ...token,
+                                                type: "IVarDrop",
+                                                
                                             });
                                         }
                                         break;
@@ -304,6 +328,16 @@ export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[]
                                 });
                             }
                             break;
+                        case "var": {
+                            const name = tokens[++i];
+                            endStack.push(instructions.length);
+                            instructions.push({
+                                ...token,
+                                type: "IVarDefine",
+                                name: name.value,
+                                endIp: -1,
+                            });
+                        } break;
                         case "import": {
                             const pat = tokens[++i].value;
                             
