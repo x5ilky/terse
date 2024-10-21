@@ -20,7 +20,8 @@ fileAssoc[filename] = file;
 const lexer = new Lexer(file, filename);
 const associated = associator(fileAssoc, lexer.lex());
 
-if (0) {
+
+if (Deno.args.includes("-d")) {
     let out = "";
     for (let i = 0; i < associated.length; i++) {
         const instr = associated[i];
