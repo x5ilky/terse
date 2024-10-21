@@ -54,7 +54,7 @@ export class Typechecker {
             ">": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "<": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "dup": { inputs: [TAny()], outputs: [TAny(), TAny()] },
-            "drop": { inputs: [TAny()], outputs: [TAny()] },
+            "drop": { inputs: [TAny()], outputs: [] },
             "swap": { inputs: [TAny(), TAny()], outputs: [TAny(), TAny()] },
 
             "ips": { inputs: [TString()], outputs: [TString() ]},
@@ -185,7 +185,7 @@ export class Typechecker {
             case "ILetBinding":
                 {
                     this.bindings.push();
-                    if (instr.names.length < this.stack.length) {
+                    if (instr.names.length > this.stack.length) {
                         errorAt(
                             this.getFileSource(instr),
                             instr,
@@ -199,6 +199,32 @@ export class Typechecker {
                 break;
             case "ICall":
                 {
+                    if (instr.instr === "dup") {
+                        if (this.stack.length === 0) {
+                            errorAt(
+                                this.getFileSource(instr),
+                                instr,
+                                `Not enough elements on stack for dup`
+                            );
+                        }
+                        const p = this.stack.pop()!;
+                        this.stack.push(p, p);
+                        return;
+                    }
+                    if (instr.instr === "swap") {
+                        if (this.stack.length < 2) {
+                            errorAt(
+                                this.getFileSource(instr),
+                                instr,
+                                `Not enough elements on stack for swap`
+                            );
+                        }
+                        const a = this.stack.pop()!;
+                        const b = this.stack.pop()!;
+                        this.stack.push(a);
+                        this.stack.push(b);
+                        return;
+                    }
                     const fn = this.functions[instr.instr];
                     if (fn === undefined) {
                         const binding = this.bindings.get(instr.instr);
@@ -222,7 +248,9 @@ export class Typechecker {
                         );
                     }
                     for (let i = 0; i < fn.inputs.length; i++) {
-                        if (!fn.inputs[i].valid(this.stack[i])) {
+                        if (!fn.inputs[i].valid(this.stack[
+                            this.stack.length - fn.inputs.length + i
+                        ])) {
                             errorAt(
                                 this.getFileSource(instr),
                                 instr,

@@ -316,7 +316,7 @@ export class Interpreter {
             },
             memfree: (stack, int) => {
                 const ptr = stack.pop()!;
-                int.memoryFree(Math.floor(ptr.innerDecimal().toNumber()))
+                int.memoryFree(Math.floor(ptr.value as number))
             },
             memsave: (stack, int) => {
                 const ptr = stack.pop()!;
@@ -350,6 +350,10 @@ export class Interpreter {
             this.ip++;
         }
         this.bindings.pop();
+        
+        if (this.memoryMap.length > 1) {
+            console.error("Unfreed memory in program, please check you have memfree'd all memalloc's")
+        }
     }
 
     async interpretOne() {
