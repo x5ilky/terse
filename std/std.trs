@@ -18,18 +18,12 @@ fn str-debug
             
             dup "\n" == if
                 "\\n" pr
-            end
-            
-            dup "\r" == if
+            else dup "\r" == if
                 "\\r" pr
-            end
-            dup "\n" != swap dup "\r" != 
-            let a b c do
-                b a c
-            end
-            && if
+            else
                 dup pr
-            end
+            end end
+            
             drop
             1 +
         end

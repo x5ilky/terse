@@ -1,6 +1,3 @@
-0 1 == if
-    10
-    "Hello, world!\n" pr
-else
-    
-end
+import "std.trs"
+
+ipse str-debug

@@ -390,7 +390,6 @@ export class Interpreter {
     }
 
     async interpretOne() {
-        for (let i = 0; i < 10000000; i++) ;;
         const instr = this.instructions[this.ip];
         switch (instr.type) {
             case "INumberLiteral":
@@ -412,7 +411,6 @@ export class Interpreter {
                             if (this.ip >= (instr.elseIp === -1 ? instr.endIp : instr.elseIp)) {
                                 break;
                             }
-                            console.log(this.ip, instr)
                             this.interpretOne();
                         }
                         this.ip = instr.endIp;
