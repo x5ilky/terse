@@ -1,7 +1,4 @@
-fn prn
-    any : do
-    pr "\n" pr
-end
+import "core.trs"
 
 fn str-debug
     string : do
