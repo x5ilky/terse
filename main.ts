@@ -20,7 +20,7 @@ fileAssoc[filename] = file;
 const lexer = new Lexer(file, filename);
 const associated = associator(fileAssoc, lexer.lex());
 
-if (1) {
+if (0) {
     let out = "";
     for (let i = 0; i < associated.length; i++) {
         const instr = associated[i];
