@@ -135,7 +135,6 @@ export class Lexer {
                         case "do":
                         case "fn":
                         case "import":
-                        case "var":
                         case ":":
                             {
                                 tokens.push({

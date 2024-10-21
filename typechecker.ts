@@ -32,14 +32,12 @@ export class Typechecker {
     functions: { [n: string]: { inputs: Type[]; outputs: Type[] } };
     instructions: Instruction[];
     bindings: Chainmap<string, Type>;
-    variables: Chainmap<string, null>;
     ip: number;
 
     constructor(fileAssoc: FileAssoc, instructions: Instruction[]) {
         this.fileAssoc = fileAssoc;
         this.instructions = instructions;
         this.bindings = new Chainmap();
-        this.variables = new Chainmap();
         this.functions = {
             "+": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "-": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
@@ -284,9 +282,6 @@ export class Typechecker {
             case "IDropBinding":
                 this.bindings.pop();
                 break;
-            case "IFunctionStart": this.variables.push(); break;
-            case "IVarDefine": this.variables.set(instr.name, null); break;
-            case "IVarDrop": this.variables.pop(); break;
             case "IImport":
             case "IReturn":
             case "INoop":
