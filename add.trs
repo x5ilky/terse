@@ -1,17 +1,3 @@
-fn foo
-    number string : number do
-    let a b do
-        a repeat
-            b pr
-        end
-        a
-    end
-end
+import "std.trs"
 
-fn ipne
-    : number do
-    "" ipn
-end
-
-"input: " ipn
-"Hello, world!\x0A" foo
+ipne prn

@@ -1,6 +1,8 @@
-import type { Instruction } from "./assoc.ts";
 import { Chainmap } from "./chainmap.ts";
 import { errorAt } from "./misc.ts";
+import { type Location } from "./lexer.ts";
+import type { FileAssoc } from "./main.ts";
+import type { Instruction } from "./assoc.ts";
 
 class Type {
     name: string;
@@ -25,15 +27,15 @@ const TString = () => new Type("string");
 const TAny = () => new Type("any");
 
 export class Typechecker {
-    source: string;
+    fileAssoc: FileAssoc;
     stack: Type[];
     functions: { [n: string]: { inputs: Type[]; outputs: Type[] } };
     instructions: Instruction[];
     bindings: Chainmap<string, Type>;
     ip: number;
 
-    constructor(source: string, instructions: Instruction[]) {
-        this.source = source;
+    constructor(fileAssoc: FileAssoc, instructions: Instruction[]) {
+        this.fileAssoc = fileAssoc;
         this.instructions = instructions;
         this.bindings = new Chainmap();
         this.functions = {
@@ -65,6 +67,16 @@ export class Typechecker {
         this.ip = 0;
     }
 
+    getFileSource(instr: Location): string {
+        return this.fileAssoc[instr.file];
+    }
+
+    merge(other: Typechecker) {
+        for (const fn in other.functions) {
+            this.functions[fn] = other.functions[fn];
+        }
+    }
+
     typecheck() {
         while (this.ip < this.instructions.length) {
             this.typecheckOne();
@@ -85,7 +97,7 @@ export class Typechecker {
                 {
                     if (this.stack.length === 0) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             "No elements on stack, if statement has no condition",
                         );
@@ -93,7 +105,7 @@ export class Typechecker {
                     const popped = this.stack.pop();
                     if (!popped?.valid(TNumber())) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `If statement only works on type number, instead got type '${popped}'`,
                         );
@@ -106,7 +118,7 @@ export class Typechecker {
                     }
                     if (this.stack.length !== beginSize) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `Stack size inside and outside of if statement are different; got ${
                                 this.stack.length - beginSize
@@ -119,7 +131,7 @@ export class Typechecker {
                 {
                     if (this.stack.length === 0) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             "No elements on stack, repeat statement has no iterator",
                         );
@@ -127,7 +139,7 @@ export class Typechecker {
                     const popped = this.stack.pop();
                     if (!popped?.valid(TNumber())) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `'repeat' statement only works on type number, instead got type '${popped}'`,
                         );
@@ -146,14 +158,14 @@ export class Typechecker {
                     const popped = this.stack.pop();
                     if (!popped?.valid(TNumber())) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `'while' statement predicate only works on type number, instead got type '${popped}'`,
                         );
                     }
                     if (this.stack.length !== startingSize) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `While statement predicate should give 1 more element (predicate); instead got ${
                                 this.stack.length - startingSize
@@ -167,7 +179,7 @@ export class Typechecker {
                     this.bindings.push();
                     if (instr.names.length < this.stack.length) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `binding requires ${instr.names.length} values to be on stack, only received ${this.stack.length}`,
                         );
@@ -184,7 +196,7 @@ export class Typechecker {
                         const binding = this.bindings.get(instr.instr);
                         if (binding === undefined) {
                             errorAt(
-                                this.source,
+                                this.getFileSource(instr),
                                 instr,
                                 `no function or binding called ${instr.instr}`,
                             );
@@ -194,7 +206,7 @@ export class Typechecker {
                     }
                     if (fn.inputs.length > this.stack.length) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `not enough elements on stack to call ${instr.instr}; ${instr.instr} takes ${fn.inputs.length} arguments, instead received ${this.stack.length} arguments.\nExpected: ${
                                 fn.inputs.join(", ")
@@ -204,7 +216,7 @@ export class Typechecker {
                     for (let i = 0; i < fn.inputs.length; i++) {
                         if (!fn.inputs[i].valid(this.stack[i])) {
                             errorAt(
-                                this.source,
+                                this.getFileSource(instr),
                                 instr,
                                 `mismatching argument types; expected: ${
                                     fn.inputs.map((a) => a.name).join(", ")
@@ -240,7 +252,7 @@ export class Typechecker {
                     }
                     if (fn.outputs.length !== this.stack.length) {
                         errorAt(
-                            this.source,
+                            this.getFileSource(instr),
                             instr,
                             `Expected function to leave ${fn.outputs.length} on stack. Expected: ${
                                 fn.outputs.map((a) => a.name).join(", ")
@@ -252,7 +264,7 @@ export class Typechecker {
                     for (let i = 0; i < fn.outputs.length; i++) {
                         if (!fn.outputs[i].valid(this.stack[i])) {
                             errorAt(
-                                this.source,
+                                this.getFileSource(instr),
                                 instr,
                                 `Expected function to leave ${fn.outputs.length} on stack. Expected: ${
                                     fn.outputs.map((a) => a.name).join(", ")
@@ -268,6 +280,7 @@ export class Typechecker {
             case "IDropBinding":
                 this.bindings.pop();
                 break;
+            case "IImport":
             case "IReturn":
             case "INoop":
                 break;

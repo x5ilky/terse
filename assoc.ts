@@ -1,6 +1,8 @@
+import * as path from "jsr:@std/path"
 import { Decimal } from "decimal.js";
-import type { Location, Token } from "./lexer.ts";
+import { Lexer, type Location, type Token } from "./lexer.ts";
 import { errorAt } from "./misc.ts";
+import type { FileAssoc } from "./main.ts";
 
 export type Instruction = InstructionBase & Location;
 export type InstructionBase =
@@ -14,6 +16,7 @@ export type InstructionBase =
     | ICall
     | IReturn
     | IFunction
+    | IImport
     | INoop;
 
 export type INumberLiteral = {
@@ -23,6 +26,10 @@ export type INumberLiteral = {
 export type IStringLiteral = {
     type: "IStringLiteral";
     value: string;
+};
+export type IImport = {
+    type: "IImport";
+    path: string;
 };
 export type IIfStatement = {
     type: "IIfStatement";
@@ -66,8 +73,8 @@ export type IFunction = {
     name: string;
 };
 
-export function associator(source: string, tokens: Token[]): Instruction[] {
-    const instructions: Instruction[] = [];
+export function associator(fileAssoc: FileAssoc, tokens: Token[]): Instruction[] {
+    let instructions: Instruction[] = [];
 
     const endStack: number[] = [];
     let resolvedWhiles = 0;
@@ -131,12 +138,12 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 const whileIdx = endStack.pop();
                                 endStack.push(whileIdx!);
                                 if (whileIdx === undefined) {
-                                    errorAt(source, token, "random do keyword");
+                                    errorAt(fileAssoc[token.file], token, "random do keyword");
                                 }
                                 const whileBlock = instructions[whileIdx];
                                 if (whileBlock.type !== "IWhileStatement") {
                                     errorAt(
-                                        source,
+                                        fileAssoc[token.file],
                                         token,
                                         "do keyword can only be used with `while`",
                                     );
@@ -174,7 +181,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 const name = tokens[++i];
                                 if (name?.type !== "identifier") {
                                     errorAt(
-                                        source,
+                                        fileAssoc[token.file],
                                         token,
                                         "Either no name was received or name received wasnt an identifier",
                                     );
@@ -183,7 +190,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 while (true) {
                                     if (i >= tokens.length) {
                                         errorAt(
-                                            source,
+                                            fileAssoc[token.file],
                                             token,
                                             "Expected type of argument",
                                         );
@@ -199,7 +206,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
 
                                     if (type.type !== "identifier") {
                                         errorAt(
-                                            source,
+                                            fileAssoc[type.file],
                                             type,
                                             "Type of argument wasn't identifier",
                                         );
@@ -210,7 +217,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 while (true) {
                                     if (i >= tokens.length) {
                                         errorAt(
-                                            source,
+                                            fileAssoc[token.file],
                                             token,
                                             "Expected type of output",
                                         );
@@ -226,7 +233,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
 
                                     if (type.type !== "identifier") {
                                         errorAt(
-                                            source,
+                                            fileAssoc[type.file],
                                             type,
                                             "Type of argument wasn't identifier",
                                         );
@@ -253,7 +260,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                             {
                                 if (endStack.length === 0) {
                                     errorAt(
-                                        source,
+                                        fileAssoc[token.file],
                                         token,
                                         "`end` keyword has no matching flow",
                                     );
@@ -297,6 +304,45 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
                                 });
                             }
                             break;
+                        case "import": {
+                            const pat = tokens[++i].value;
+                            
+                            if (pat.startsWith(".")) {
+                                // relative path
+                                errorAt(fileAssoc[token.file], token, "Relative imports haven't been implemented yet! Search for a todo called 'relative imports'");
+                                // TODO: relative imports
+                            }
+                            const p = path.join(import.meta.dirname!, "std")
+                            try {
+                                const stdFolder = Deno.lstatSync(p);
+                                if (!stdFolder.isDirectory) errorAt(fileAssoc[token.file], token, "std directory isn't a directory");
+                                const file = path.join(p, pat);
+                                const f = Deno.readTextFileSync(file);
+                                fileAssoc[file] = f;
+                                const lexer = new Lexer(f, file);
+                                const tokens = lexer.lex();
+                                let assoc = associator(fileAssoc, tokens);
+                                assoc = assoc.map(a => {
+                                    switch (a.type) {
+                                        case "IIfStatement": a.endIp += instructions.length; break;
+                                        case "IRepeatStatement": a.startIp += instructions.length; a.endIp += instructions.length; break;
+                                        case "IWhileStatement": {
+                                            a.bodyIp += instructions.length;
+                                            a.endIp += instructions.length;
+                                            a.predicateIp += instructions.length;
+                                        } break;
+                                        case "IFunction": {
+                                            a.endIp += instructions.length;
+                                            a.startIp += instructions.length;
+                                        } break;
+                                    }
+                                    return a;
+                                })
+                                instructions = instructions.concat(assoc);
+                            } catch (e) {
+                                errorAt(fileAssoc[token.file], token, `Couldn't find standard library error: ${e}`)
+                            }
+                        } break;
                     }
                 }
                 break;
@@ -316,28 +362,28 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
         switch (v.type) {
             case "IIfStatement":
                 errorAt(
-                    source,
+                    fileAssoc[v.file],
                     v,
                     "error: if statement has no matching `end` keyword",
                 );
                 break;
             case "IRepeatStatement":
                 errorAt(
-                    source,
+                    fileAssoc[v.file],
                     v,
                     "error: repeat statement has no matching `end` keyword",
                 );
                 break;
             case "IWhileStatement":
                 errorAt(
-                    source,
+                    fileAssoc[v.file],
                     v,
                     "error: while statement has no matching `end` keyword",
                 );
                 break;
             case "IFunction":
                 errorAt(
-                    source,
+                    fileAssoc[v.file],
                     v,
                     "error: function has no matching `end` keyword",
                 );
@@ -348,7 +394,7 @@ export function associator(source: string, tokens: Token[]): Instruction[] {
     if (resolvedWhiles) {
         for (const instr of instructions) {
             if (instr.type === "IWhileStatement" && instr.bodyIp === -1) {
-                errorAt(source, instr, "while has no matching do keyword");
+                errorAt(fileAssoc[instr.file], instr, "while has no matching do keyword");
             }
         }
     }

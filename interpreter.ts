@@ -1,7 +1,10 @@
+import * as path from "jsr:@std/path"
 import { Decimal } from "decimal.js";
 import { asyncPrompt, errorAt, writeStdout } from "./misc.ts";
-import type { Instruction } from "./assoc.ts";
+import { associator, type Instruction } from "./assoc.ts";
 import { Chainmap } from "./chainmap.ts";
+import { Lexer, type Location } from "./lexer.ts";
+import type { FileAssoc } from "./main.ts";
 
 
 class Value {
@@ -55,7 +58,7 @@ class Value {
 }
 
 export class Interpreter {
-    source: string;
+    fileAssoc: FileAssoc;
     instructions: Instruction[];
     ip: number;
     stack: Value[];
@@ -64,9 +67,9 @@ export class Interpreter {
         [n: string]: (stack: Value[], interpreter: Interpreter) => Promise<void> | void;
     };
     bindings: Chainmap<string, Value>;
-    constructor(source: string, instructions: Instruction[]) {
+    constructor(fileAssoc: FileAssoc, instructions: Instruction[]) {
         this.ip = 0;
-        this.source = source;
+        this.fileAssoc = fileAssoc;
         this.instructions = instructions;
         this.stack = [];
         this.callStack = [];
@@ -306,6 +309,16 @@ export class Interpreter {
         };
     }
 
+    merge(other: Interpreter) {
+        for (const fn in other.functions) {
+            this.functions[fn] = other.functions[fn]
+        }
+    }
+
+    getFileSource(instr: Location): string {
+        return this.fileAssoc[instr.file]
+    }
+
     async interpret() {
         this.bindings.push();
         while (this.ip < this.instructions.length) {
@@ -401,7 +414,7 @@ export class Interpreter {
                         const binding = this.bindings.get(instr.instr);
                         if (binding === undefined) {
                             errorAt(
-                                this.source,
+                                this.getFileSource(instr),
                                 instr,
                                 `no function or binding called: ${instr.instr}`,
                             );
@@ -437,10 +450,32 @@ export class Interpreter {
                 break;
             case "INoop":
                 break;
+            case "IImport": {
+                if (instr.path.startsWith(".")) {
+                    // relative path
+                    errorAt(this.getFileSource(instr), instr, "Relative imports haven't been implemented yet! Search for a todo called 'relative imports'");
+                    // TODO: relative imports
+                }
+                const p = path.join(import.meta.dirname!, "std")
+                try {
+                    const stdFolder = Deno.lstatSync(p);
+                    if (!stdFolder.isDirectory) errorAt(this.getFileSource(instr), instr, "std directory isn't a directory");
+                    const file = path.join(p, instr.path);
+                    const f = Deno.readTextFileSync(file);
+                    const lexer = new Lexer(f, file);
+                    const tokens = lexer.lex();
+                    const assoc = associator(this.fileAssoc, tokens);
+                    const inter = new Interpreter(this.fileAssoc, assoc);
+                    inter.interpret();
+                    this.merge(inter);
+                } catch (e) {
+                    errorAt(this.getFileSource(instr), instr, `Couldn't find standard library error: ${e}`)
+                }
+            } break;
             default:
                 {
                     errorAt(
-                        this.source,
+                        this.getFileSource(instr),
                         instr,
                         // deno-lint-ignore no-explicit-any
                         `Unimplemented: ${(instr as any).type}`,
