@@ -52,6 +52,8 @@ export class Typechecker {
             "pr": { inputs: [TAny()], outputs: [] },
             "==": { inputs: [TAny(), TAny()], outputs: [TNumber()] },
             "!=": { inputs: [TAny(), TAny()], outputs: [TNumber()] },
+            "&&": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
+            "||": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             ">=": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "<=": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             ">": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },

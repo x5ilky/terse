@@ -3,7 +3,43 @@ fn prn
     pr "\n" pr
 end
 
-fn remove-final
+fn str-debug
+    string : do
+    str2countstr
+    "\"" pr
+    let ptr count do
+        0
+        count repeat
+            ptr swap
+            let a b do
+                b a b
+            end
+            ptr+ memload
+            
+            dup "\n" == if
+                "\\n" pr
+            end
+            
+            dup "\r" == if
+                "\\r" pr
+            end
+            dup "\n" != swap dup "\r" != 
+            let a b c do
+                b a c
+            end
+            && if
+                dup pr
+            end
+            drop
+            1 +
+        end
+        drop
+        ptr memfree
+    end
+    "\"\n" pr
+end
+
+fn str-remove-final
     string number : string do
     swap 1 memalloc
     swap str2countstr

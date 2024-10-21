@@ -30,11 +30,12 @@ class Value {
     }
 
     equals(b: Value): boolean {
-        return this.type == b.type
-            ? this.type == "number"
-                ? this.innerDecimal().eq(b.innerDecimal())
-                : this.value == b.value
-            : false;
+        if (this.type !== b.type) return false;
+        switch (this.type) {
+            case "string": return b.type === "string" ? this.value === b.value : false;
+            case "number": return b.type === "number" ? this.innerDecimal().eq(b.innerDecimal()) : false;
+            case "ptr":  return b.type === "ptr" ? this.innerPointer() === b.innerPointer() : false;
+        }
     }
 
     innerDecimal(): Decimal {
@@ -191,17 +192,28 @@ export class Interpreter {
                 }
             },
 
+            "&&": (stack) => {
+                const a = stack.pop()?.innerDecimal()!;
+                const b = stack.pop()?.innerDecimal()!;
+
+                stack.push(Value.newNumber(new Decimal(+(a.gt(0) && b.gt(0)))));
+            },
+            "||": (stack) => {
+                const a = stack.pop()?.innerDecimal()!;
+                const b = stack.pop()?.innerDecimal()!;
+
+                stack.push(Value.newNumber(new Decimal(+(a.gt(0) || b.gt(0)))));
+            },
             "==": (stack) => {
                 const a = stack.pop();
                 const b = stack.pop();
-
                 stack.push(Value.newNumber(new Decimal(+a!.equals(b!))));
             },
             "!=": (stack) => {
                 const a = stack.pop();
                 const b = stack.pop();
 
-                stack.push(Value.newNumber(new Decimal(-a!.equals(b!))));
+                stack.push(Value.newNumber(new Decimal(+!a!.equals(b!))));
             },
             ">": (stack) => {
                 const b = stack.pop();
@@ -378,6 +390,7 @@ export class Interpreter {
     }
 
     async interpretOne() {
+        for (let i = 0; i < 10000000; i++) ;;
         const instr = this.instructions[this.ip];
         switch (instr.type) {
             case "INumberLiteral":
@@ -402,7 +415,7 @@ export class Interpreter {
                             this.interpretOne();
                         }
                     } else {
-                        this.ip = instr.end;
+                        this.ip = instr.endIp;
                     }
                 }
                 break;

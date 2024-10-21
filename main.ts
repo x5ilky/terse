@@ -19,6 +19,20 @@ const file = Deno.readTextFileSync(filename);
 fileAssoc[filename] = file;
 const lexer = new Lexer(file, filename);
 const associated = associator(fileAssoc, lexer.lex());
+
+if (1) {
+    let out = "";
+    for (let i = 0; i < associated.length; i++) {
+        const instr = associated[i];
+        out += `${i}: ${instr.type}`;
+        if ("endIp" in instr) {
+            out += ` -> ${instr.endIp}`;
+        }
+        out += "\n";
+    }
+    Deno.writeTextFileSync("debug.txt", out);
+}
+
 const typechecker = new Typechecker(fileAssoc, associated);
 typechecker.typecheck();
 const interpreter = new Interpreter(fileAssoc, associated);

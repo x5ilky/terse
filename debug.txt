@@ -1,0 +1,142 @@
+0: IFunction -> 5
+1: INoop
+2: ICall
+3: IStringLiteral
+4: ICall
+5: IReturn
+6: INoop
+7: IFunction -> 69
+8: INoop
+9: ICall
+10: IStringLiteral
+11: ICall
+12: ILetBinding
+13: INumberLiteral
+14: ICall
+15: IRepeatStatement -> 61
+16: ICall
+17: ICall
+18: ILetBinding
+19: ICall
+20: ICall
+21: ICall
+22: IDropBinding
+23: INoop
+24: ICall
+25: ICall
+26: ICall
+27: IStringLiteral
+28: ICall
+29: IIfStatement -> 32
+30: IStringLiteral
+31: ICall
+32: INoop
+33: ICall
+34: IStringLiteral
+35: ICall
+36: IIfStatement -> 39
+37: IStringLiteral
+38: ICall
+39: INoop
+40: ICall
+41: IStringLiteral
+42: ICall
+43: ICall
+44: ICall
+45: IStringLiteral
+46: ICall
+47: ILetBinding
+48: ICall
+49: ICall
+50: ICall
+51: IDropBinding
+52: INoop
+53: ICall
+54: IIfStatement -> 57
+55: ICall
+56: ICall
+57: INoop
+58: ICall
+59: INumberLiteral
+60: ICall
+61: INoop
+62: ICall
+63: ICall
+64: ICall
+65: IDropBinding
+66: INoop
+67: IStringLiteral
+68: ICall
+69: IReturn
+70: INoop
+71: IFunction -> 106
+72: INoop
+73: ICall
+74: INumberLiteral
+75: ICall
+76: ICall
+77: ICall
+78: ILetBinding
+79: INumberLiteral
+80: ICall
+81: ICall
+82: IStringLiteral
+83: ICall
+84: ICall
+85: ICall
+86: IRepeatStatement -> 99
+87: ICall
+88: ICall
+89: ICall
+90: ICall
+91: ICall
+92: ICall
+93: ICall
+94: ICall
+95: INumberLiteral
+96: ICall
+97: ICall
+98: ICall
+99: INoop
+100: ICall
+101: ICall
+102: ICall
+103: ICall
+104: IDropBinding
+105: INoop
+106: IReturn
+107: INoop
+108: IFunction -> 112
+109: INoop
+110: ICall
+111: ICall
+112: IReturn
+113: INoop
+114: IFunction -> 118
+115: INoop
+116: IStringLiteral
+117: ICall
+118: IReturn
+119: INoop
+120: IFunction -> 124
+121: INoop
+122: IStringLiteral
+123: ICall
+124: IReturn
+125: INoop
+126: IFunction -> 128
+127: INoop
+128: IReturn
+129: INoop
+130: IFunction -> 133
+131: INoop
+132: ICall
+133: IReturn
+134: INoop
+135: IFunction -> 138
+136: INoop
+137: ICall
+138: IReturn
+139: INoop
+140: IStringLiteral
+141: ICall
