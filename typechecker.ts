@@ -24,7 +24,7 @@ class Type {
 
 const TNumber = () => new Type("number");
 const TString = () => new Type("string");
-const TPointer = () => new Type("pointer");
+const TPointer = () => new Type("ptr");
 const TAny = () => new Type("any");
 
 export class Typechecker {

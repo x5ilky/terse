@@ -5,7 +5,7 @@ fn prn
 end
 
 fn !
-    ptr any : do
+    any ptr : do
     memsave
 end
 
@@ -14,8 +14,8 @@ fn @
     memload
 end
 
-fn !num ptr number : do ! end
-fn !str ptr string : do ! end
+fn !num number ptr : do ! end
+fn !str string ptr : do ! end
 fn !ptr ptr ptr    : do ! end
 fn @num ptr : number do @ end
 fn @str ptr : string do @ end

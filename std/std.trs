@@ -1,36 +1,54 @@
 import "core.trs"
 
-fn str-debug
-    string : do
-    str2countstr
+fn cstr-nth-char
+    ptr number number : string do
+    let str count nth do
+        str nth ptr+ @str
+    end
+end
+
+fn cstr-debug
+    ptr number : do
     "\"" pr
     let ptr count do
         0
         count repeat
-            ptr swap
-            let a b do
-                b a b
+            let c do
+                c
+                ptr count c cstr-nth-char
             end
-            ptr+ memload
             
             dup "\n" == if
                 "\\n" pr
             else dup "\r" == if
                 "\\r" pr
+            else dup "\\" == if
+                "\\\\" pr
+            else dup "\"" == if
+                "\\\"" pr
             else
                 dup pr
-            end end
+            end end end end
             
             drop
             1 +
         end
         drop
-        ptr memfree
     end
     "\"\n" pr
 end
 
-fn str-remove-final
+fn str-debug
+    string : do
+
+    str2countstr
+    let ptr count do
+        ptr count cstr-debug
+        ptr memfree
+    end
+end
+
+fn cstr-remove-final
     string number : string do
     swap 1 memalloc
     swap str2countstr

@@ -1,3 +1,28 @@
 import "std.trs"
 
-ipse str-debug
+1 memalloc
+1 memalloc
+1 memalloc
+
+let a b c do
+    0 a !num
+    1 b !num
+    0 c !num
+
+    "times: " ipn repeat
+        a @num prn
+
+        a @num b @num + c !num
+        // c = a + b
+
+
+        b @num a !num 
+        // a = b
+        c @num b !num
+        // b = c
+    end
+
+    a memfree
+    b memfree
+    c memfree
+end

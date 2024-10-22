@@ -15,6 +15,9 @@ export class Chainmap<K, V> {
         this.stacks[this.stacks.length - 1].set(k, v);
     }
     get(k: K) {
-        return this.stacks[this.stacks.length - 1]?.get(k);
+        for (const stack of this.stacks.toReversed()) {
+            if (stack.has(k)) return stack.get(k);
+        }
+        return undefined;
     }
 }
