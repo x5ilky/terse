@@ -28,6 +28,7 @@ fn @ptr ptr : ptr    do @ end
 fn ptr-add number ptr : do let count ptr do ptr @num count + ptr !num end end
 fn ptr-sub number ptr : do swap 0 1 - * swap ptr-add end
 fn ptr-inc ptr : do 1 swap ptr-add end
+fn ptr-dec ptr : do 0 1 - swap ptr-add end
 
 // src: ptr, dest: ptr, size: number
 fn memcopy ptr ptr number : do

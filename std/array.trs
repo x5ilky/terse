@@ -58,3 +58,14 @@ fn array:push any array : do
         arr cast(ptr) offsetof(array.count) ptr+ ptr-inc
     end
 end
+
+fn array:pop array : any do
+    let arr do
+        arr array.count 0 < if
+            "error [array:pop]: no elements in array" prn
+            1 exit
+        end
+        arr array.count 1 - arr array:nth
+        arr cast(ptr) offsetof(array.count) ptr+ ptr-dec
+    end
+end
