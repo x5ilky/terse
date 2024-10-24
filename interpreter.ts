@@ -177,6 +177,22 @@ export class Interpreter {
                     );
                 }
             },
+            floor: (stack) => {
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().floor()))
+            },
+            ceil: (stack) => {
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().ceil()))
+            },
+            round: (stack) => {
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().round()))
+            },
+            "is-integer": (stack) => {
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(new Decimal(+a.innerDecimal().isInteger())))
+            },
             pr: (stack) => {
                 const a = stack.pop();
                 switch (a?.type) {
@@ -477,6 +493,7 @@ export class Interpreter {
                     if (fn === undefined) {
                         const binding = this.bindings.get(instr.instr);
                         if (binding === undefined) {
+                            console.log(this.bindings);
                             errorAt(
                                 this.getFileSource(instr),
                                 instr,
