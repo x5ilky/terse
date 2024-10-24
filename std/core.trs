@@ -29,18 +29,32 @@ fn ptr-add number ptr : do let count ptr do ptr @num count + ptr !num end end
 fn ptr-sub number ptr : do swap 0 1 - * swap ptr-add end
 fn ptr-inc ptr : do 1 swap ptr-add end
 
-// from: ptr, target: ptr, size: number
+// src: ptr, dest: ptr, size: number
 fn memcopy ptr ptr number : do
     1 memalloc // allocate iterator
-    let from target size i do
+    let src dest size i do
         0 i !num
         size repeat
-            ???mm
-            // target[i] = from[i]
-            "memcpy: " pr i @num pr " " pr from i @num ptr+ @ pr "" prn
-            from i @num ptr+ @ target i @num ptr+ !
+            // dest[i] = src[i]
+            "memcpy: " pr i @num pr " " pr src i @num ptr+ @ pr "" prn
+            src i @num ptr+ @ dest i @num ptr+ !
             i ptr-inc
         end
         i memfree
     end
+end
+
+// src: ptr, oldsize: number, newsize: number -> dest: ptr
+fn realloc ptr number number : ptr do
+    1 memalloc
+    let src oldsize newsize i do newsize memalloc let dest do
+        0 i !num
+        oldsize repeat
+            src i @num ptr+ @ dest i @num ptr+ !
+            i ptr-inc
+        end
+        i memfree
+        src memfree
+        dest
+    end end
 end

@@ -40,6 +40,7 @@ export class Typechecker {
         this.instructions = instructions;
         this.bindings = new Chainmap();
         this.functions = {
+            "exit": {inputs: [TNumber()], outputs: [] },
             "???": { inputs: [], outputs: [] },
             "???m": { inputs: [], outputs: [] },
             "???mm": { inputs: [], outputs: [] },

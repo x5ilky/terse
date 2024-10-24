@@ -95,12 +95,17 @@ export class Interpreter {
         this.memMapLoc = {};
         this.bindings = new Chainmap();
         this.functions = {
+            "exit": stack => {
+                const code = stack.pop()!;
+
+                Deno.exit(code.innerDecimal().toNumber())
+            },
             "???": stack => {
                 console.dir(stack.map(a => a.type), {depth: null});
                 Deno.exit(1);
             },
             "???m": () => {
-                // console.log(this.memory)
+                console.log(this.memory)
             },
             "???mm": () => {
                 // console.log(this.memoryMap)
@@ -527,8 +532,7 @@ export class Interpreter {
             const part = this.memoryMap[i];
             if (!part.free) continue;
             if (part.size > size) {
-                console.log(`split ${part.start}:${part.size} into ${part.start}:${size} ${part.start + size}:${part.size - size}`)
-                this.memoryMap.splice(i, 2, {free: false, size: size, start: part.start}, {free: true, size: part.size - size, start: part.start + size});
+                this.memoryMap.splice(i, 1, {free: false, size: size, start: part.start}, {free: true, size: part.size - size, start: part.start + size});
                 this.memoryCondense();
                 return part.start;
             }
@@ -541,7 +545,6 @@ export class Interpreter {
     }
 
     memoryFree(ptr: number) {
-        console.log(`freeing: ${ptr}`);
         const map = this.memoryMap.find(a => a.start === ptr)!;
         if (map === undefined) {
             console.error(`No memory allocated at ${ptr}! something has gone wrong`);
@@ -564,15 +567,11 @@ export class Interpreter {
             if (part.free) {
                 if (this.memoryMap?.[i+1] === undefined) continue;
                 if (this.memoryMap[i+1].free) {
-                    console.log(`condesing: `, this.memoryMap[i], this.memoryMap[i+1])
-                    console.log(this.memoryMap);
                     this.memoryMap.splice(i, 2, {
                         start: part.start,
                         size: part.size + this.memoryMap[i+1].size,
                         free: true
                     });
-                    console.log(this.memoryMap);
-                    console.log(`end condense`)
                     return this.memoryCondense();
                 }
             }
