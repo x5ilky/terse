@@ -20,3 +20,7 @@ fn !ptr ptr ptr    : do ! end
 fn @num ptr : number do @ end
 fn @str ptr : string do @ end
 fn @ptr ptr : ptr    do @ end
+
+fn ptr-add number ptr : do let count ptr do ptr @num count + ptr !num end end
+fn ptr-sub number ptr : do swap 0 1 - * swap ptr-add end
+fn ptr-inc ptr : do 1 swap ptr-add end

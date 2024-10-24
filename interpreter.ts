@@ -200,7 +200,7 @@ export class Interpreter {
                         writeStdout(a?.innerString());
                         break;
                     case "number":
-                        writeStdout(a?.value.toString());
+                        writeStdout(a?.innerDecimal().toString());
                         break;
                     case "ptr":
                         writeStdout((a.value as number).toString());
