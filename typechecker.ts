@@ -41,6 +41,8 @@ export class Typechecker {
         this.bindings = new Chainmap();
         this.functions = {
             "???": { inputs: [], outputs: [] },
+            "???m": { inputs: [], outputs: [] },
+            "???mm": { inputs: [], outputs: [] },
             "+": { inputs: [TNumber(), TNumber()], outputs: [TNumber()] },
             "ptr+": {inputs: [TPointer(), TNumber()], outputs: [TPointer()]},
             "str+": {inputs: [TString(), TString()], outputs: [TString()]},

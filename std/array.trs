@@ -1,0 +1,74 @@
+import "core.trs"
+// basically a vector type
+fn offsetof(array.data)     : number do 0 end
+fn offsetof(array.count)    : number do 1 end
+fn offsetof(array.capacity) : number do 2 end
+
+fn cast(array) any : array do end
+
+fn array.new : array do 
+    3 memalloc
+    let ptr do 
+        1 memalloc ptr offsetof(array.data) ptr+ !ptr
+        0 ptr offsetof(array.count) ptr+ !num
+        1 ptr offsetof(array.capacity) ptr+ !num
+
+        ptr
+    end
+    cast(array)
+end
+
+fn array.free array : do
+    cast(ptr)
+    let ptr do
+        ptr offsetof(array.data) ptr+ @ptr memfree
+        ptr memfree
+    end
+end
+
+fn array.capacity array : number do
+    cast(ptr) offsetof(array.capacity) ptr+ @num
+end
+fn array.count array : number do
+    cast(ptr) offsetof(array.count) ptr+ @num
+end
+fn array.nthpointer array number : ptr do
+    swap cast(ptr) @ptr swap ptr+
+end
+fn array.nth array number : any do
+    array.nthpointer @
+end
+
+fn array.push any array : do
+    let v p do
+        v p cast(ptr) p
+    end
+    let value ptr arr do
+        "pushing " pr value pr "..." prn
+        // if (arr->count +1 > arr->capacity)
+        arr array.count 1 + arr array.capacity > if
+            // arr->capacity *= 2
+            arr array.capacity 2 * ptr offsetof(array.capacity) ptr+ !num
+            // newarr = malloc(arr->capacity)
+            arr array.capacity memalloc
+            // arr->data = realloc(...)
+            let newarr do
+                // memcpy(arr->data, newarr, arr->count)
+                ptr @ptr newarr arr array.count memcopy
+                // free(arr->data)
+                "orig pointer: " pr ptr @ptr prn
+                "new  pointer: " pr newarr prn
+                ptr @ptr memfree
+                // arr->data = newarr
+                
+                newarr ptr !ptr
+            end
+        end
+
+        // arr->data[arr->count] = value
+        ptr offsetof(array.data) ptr+ 
+        // 
+
+        ptr offsetof(array.count) ptr+ ptr-inc
+    end
+end

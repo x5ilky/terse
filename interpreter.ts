@@ -74,11 +74,12 @@ export class Interpreter {
     instructions: Instruction[];
     memory: Value[];
     memoryMap: {start: number, size: number, free: boolean}[]
+    memMapLoc: {[start: number]: Location}
     ip: number;
     stack: Value[];
     callStack: number[];
     functions: {
-        [n: string]: (stack: Value[], interpreter: Interpreter) => Promise<void> | void;
+        [n: string]: (stack: Value[], interpreter: Interpreter, instr: Instruction) => Promise<void> | void;
     };
     bindings: Chainmap<string, Value>;
     constructor(fileAssoc: FileAssoc, instructions: Instruction[]) {
@@ -91,11 +92,18 @@ export class Interpreter {
         this.memoryMap = [
             {free: true, size: 300000, start: 0}
         ];
+        this.memMapLoc = {};
         this.bindings = new Chainmap();
         this.functions = {
             "???": stack => {
                 console.dir(stack.map(a => a.type), {depth: null});
                 Deno.exit(1);
+            },
+            "???m": () => {
+                // console.log(this.memory)
+            },
+            "???mm": () => {
+                // console.log(this.memoryMap)
             },
             "+": (stack) => {
                 const b = stack.pop()!;
@@ -119,63 +127,28 @@ export class Interpreter {
                 );
             },
             "-": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().sub(b.value)));
-                } else {
-                    console.log(
-                        "`-` can only be used with number + number, instead got",
-                        `${b?.type} + ${a?.type}`,
-                    );
-                }
+                const b = stack.pop()!;
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().sub(b.value)));
             },
             "*": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().mul(b.value)));
-                } else {
-                    console.log(
-                        "`*` can only be used with number + number, instead got",
-                        `${b?.type} + ${a?.type}`,
-                    );
-                }
+                const b = stack.pop()!;
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().mul(b.value)));
             },
             "/": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (b?.type == "number" && a?.type == "number") {
+                const b = stack.pop()!;
+                const a = stack.pop()!;
                     stack.push(Value.newNumber(a.innerDecimal().div(b.value)));
-                } else {
-                    console.log(
-                        "`/` can only be used with number + number, instead got",
-                        `${b?.type} + ${a?.type}`,
-                    );
-                }
             },
             "^": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (b?.type == "number" && a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().pow(b.value)));
-                } else {
-                    console.log(
-                        "`^` can only be used with number + number, instead got",
-                        `${b?.type} + ${a?.type}`,
-                    );
-                }
+                const b = stack.pop()!;
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().pow(b.value)));
             },
             sqrt: (stack) => {
-                const a = stack.pop();
-                if (a?.type == "number") {
-                    stack.push(Value.newNumber(a.innerDecimal().sqrt()));
-                } else {
-                    console.log(
-                        "`sqrt` can only be used with number, instead got",
-                        `${a?.type}`,
-                    );
-                }
+                const a = stack.pop()!;
+                stack.push(Value.newNumber(a.innerDecimal().sqrt()));
             },
             pr: (stack) => {
                 const a = stack.pop();
@@ -187,7 +160,7 @@ export class Interpreter {
                         writeStdout(a?.innerDecimal().toString());
                         break;
                     case "ptr":
-                        writeStdout((a.value as number).toString());
+                        writeStdout(`<ptr: ${a.innerPointer()}>`);
                         break;
                 }
             },
@@ -216,19 +189,12 @@ export class Interpreter {
                 stack.push(Value.newNumber(new Decimal(+!a!.equals(b!))));
             },
             ">": (stack) => {
-                const b = stack.pop();
-                const a = stack.pop();
-                if (a?.type != "number" || b?.type != "number") {
-                    console.error(
-                        "`>` takes only number + number, instead got",
-                        `${a?.type}, ${b?.type}`,
-                    );
-                    Deno.exit(1);
-                }
+                const b = stack.pop()!;
+                const a = stack.pop()!;
 
                 stack.push(
                     Value.newNumber(
-                        new Decimal(+a!.innerDecimal().gt(b!.innerDecimal())),
+                        new Decimal(+a.innerDecimal().gt(b.innerDecimal())),
                     ),
                 );
             },
@@ -335,12 +301,15 @@ export class Interpreter {
                 stack.push(Value.newString(num.innerDecimal().toString()))
             },
 
-            memalloc: (stack, int) => {
+            memalloc: (stack, int, instr) => {
                 const size = stack.pop()!;
-                stack.push(Value.newPointer(int.memoryAlloc(Math.floor(size.innerDecimal().toNumber()))))
+                const ptr = int.memoryAlloc(Math.floor(size.innerDecimal().toNumber()));
+                int.memMapLoc[ptr] = instr;
+                stack.push(Value.newPointer(ptr))
             },
             memfree: (stack, int) => {
                 const ptr = stack.pop()!;
+                // delete int.memMapLoc[ptr.innerPointer()];
                 int.memoryFree(Math.floor(ptr.value as number))
             },
             memsave: (stack, int) => {
@@ -386,6 +355,11 @@ export class Interpreter {
         
         if (this.memoryMap.length > 1) {
             console.error("Unfreed memory in program, please check you have memfree'd all memalloc's")
+            if (Deno.args.includes("-md")) {
+                console.dir(this.memoryMap, {depth: null})
+            } else {
+                console.error("run with -md for memory map dump")
+            }
         }
     }
 
@@ -448,7 +422,6 @@ export class Interpreter {
                         this.ip = instr.predicateIp;
                         while (this.ip < instr.bodyIp) {
                             this.ip++;
-                            // console.log(this.ip, instr.bodyIp, this.instructions[this.ip])
                             this.interpretOne();
                         }
                         const predicate = this.stack.pop()!;
@@ -485,7 +458,7 @@ export class Interpreter {
                         }
                         this.stack.push(this.bindings.get(instr.instr)!);
                     } else {
-                        await fn(this.stack, this);
+                        await fn(this.stack, this, instr);
                     }
                 }
                 break;
@@ -553,9 +526,14 @@ export class Interpreter {
         for (let i = 0; i < this.memoryMap.length; i++) {
             const part = this.memoryMap[i];
             if (!part.free) continue;
-            if (part.size >= size) {
-                this.memoryMap.splice(i, 2, {free: false, size, start: part.start}, {free: true, size: part.size - size, start: part.start + size});
+            if (part.size > size) {
+                console.log(`split ${part.start}:${part.size} into ${part.start}:${size} ${part.start + size}:${part.size - size}`)
+                this.memoryMap.splice(i, 2, {free: false, size: size, start: part.start}, {free: true, size: part.size - size, start: part.start + size});
                 this.memoryCondense();
+                return part.start;
+            }
+            if (part.size === size) {
+                this.memoryMap[i].free = false;
                 return part.start;
             }
         }
@@ -563,31 +541,39 @@ export class Interpreter {
     }
 
     memoryFree(ptr: number) {
+        console.log(`freeing: ${ptr}`);
         const map = this.memoryMap.find(a => a.start === ptr)!;
-        this.memoryMap.splice(
-            this.memoryMap.findIndex(a => a.start === ptr)!,
-            1,
-            {
-                free: true,
-                size: map.size,
-                start: map.start
+        if (map === undefined) {
+            console.error(`No memory allocated at ${ptr}! something has gone wrong`);
+            if (Deno.args.includes("-md")) {
+                console.dir(this.memoryMap, {depth: null});
+                console.dir(this.memMapLoc, {depth: null});
+            } else {
+                console.error(`run with -md to show memory map dump`)
             }
-        );
+            Deno.exit(1)
+        }
+        const ref = this.memoryMap.find(a => a.start === ptr)!;
+        ref.free = true;
         this.memoryCondense();
     }
 
-    memoryCondense() {
+    memoryCondense(): void {
         for (let i = 0; i < this.memoryMap.length; i++) {
             const part = this.memoryMap[i];
             if (part.free) {
                 if (this.memoryMap?.[i+1] === undefined) continue;
                 if (this.memoryMap[i+1].free) {
+                    console.log(`condesing: `, this.memoryMap[i], this.memoryMap[i+1])
+                    console.log(this.memoryMap);
                     this.memoryMap.splice(i, 2, {
                         start: part.start,
                         size: part.size + this.memoryMap[i+1].size,
                         free: true
                     });
-                    this.memoryCondense();
+                    console.log(this.memoryMap);
+                    console.log(`end condense`)
+                    return this.memoryCondense();
                 }
             }
         }

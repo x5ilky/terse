@@ -1,4 +1,5 @@
 import "std.trs"
+import "array.trs"
 
 1 memalloc
 1 memalloc
